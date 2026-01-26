@@ -5,125 +5,148 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TimeTracker — App</title>
 
-  <!-- Supabase (1 seule fois) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    body{margin:0;font-family:system-ui,Segoe UI,Arial;background:#05060a;color:#fff}
-    header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0))}
-    .btn{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}
-    .btn-red{background:#ef4444;color:#fff}
-    .wrap{padding:28px;display:flex;justify-content:center}
-    .card{width:100%;max-width:820px;background:#0f172a;border-radius:22px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-    h2{margin:0 0 10px}
-    .chips{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px}
-    .chip{background:rgba(255,255,255,.06);padding:8px 12px;border-radius:999px;font-size:13px}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    input{padding:12px 14px;border-radius:12px;border:0;font-size:16px;min-width:220px}
-    .btn-blue{background:#2563eb;color:#fff}
-    .btn-green{background:#10b981;color:#0b0f14}
-    .msg{margin-top:12px;min-height:22px;font-size:14px;opacity:.95}
-    .small{margin-top:14px;opacity:.7;font-size:12px}
+    :root{--bg:#05070f;--card:#0e1730;--muted:#9aa6c0;--line:#1a2a52;--ok:#19b37b;--blue:#2d6bff;--red:#ff4d4d;}
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;min-height:100vh;background:radial-gradient(1200px 600px at 50% 40%, #0f1b3d 0%, var(--bg) 60%);color:#fff}
+    header{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 0}
+    header .title{font-weight:900;letter-spacing:.2px}
+    header .title span{color:var(--muted);font-weight:700}
+    .wrap{padding:18px;display:flex;justify-content:center}
+    .card{width:min(980px,96vw);background:rgba(14,23,48,.88);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 18px 60px rgba(0,0,0,.55);backdrop-filter: blur(10px);}
+    .pill{display:inline-flex;gap:10px;flex-wrap:wrap;margin:8px 0 18px}
+    .pill b{background:#09112a;border:1px solid var(--line);padding:8px 10px;border-radius:999px;font-size:12px}
+    .grid{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+    label{display:block;color:#cfe0ff;font-size:13px;margin:0 0 6px}
+    input{width:280px;max-width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#09112a;color:#fff;outline:none}
+    button{border:0;border-radius:12px;padding:12px 14px;font-weight:900;cursor:pointer}
+    .btn-blue{background:var(--blue);color:#fff}
+    .btn-ok{background:var(--ok);color:#052014}
+    .btn-red{background:var(--red);color:#fff}
+    .msg{margin-top:14px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);color:#fff;background:rgba(0,0,0,.18);display:none}
+    .msg.show{display:block}
+    .msg.ok{border-color:rgba(25,179,123,.35)}
+    .msg.bad{border-color:rgba(255,77,77,.35)}
+    .small{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.35}
   </style>
 </head>
-
 <body>
   <header>
-    <div><b>TimeTracker</b> — tableau de bord</div>
-    <button class="btn btn-red" id="logout">Déconnexion</button>
+    <div class="title">TimeTracker <span>— tableau de bord</span></div>
+    <button id="logout" class="btn-red" type="button">Déconnexion</button>
   </header>
 
   <div class="wrap">
     <div class="card">
-      <h2>Compte</h2>
-      <div class="chips">
-        <div class="chip" id="emailChip">Email : …</div>
-        <div class="chip" id="idChip">User ID : …</div>
+      <h2 style="margin:0 0 10px">Compte</h2>
+      <div class="pill">
+        <b id="emailPill">Email : …</b>
+        <b id="idPill">User ID : …</b>
       </div>
 
-      <h2>Test sauvegarde (Supabase)</h2>
-      <div class="row">
-        <input id="hours" type="number" step="0.01" placeholder="ex: 20.75" />
-        <button class="btn btn-blue" id="load">Charger</button>
-        <button class="btn btn-green" id="save">Sauvegarder</button>
+      <h3 style="margin:0 0 12px">Test sauvegarde (Supabase)</h3>
+      <div class="grid">
+        <div>
+          <label for="hours">Heures (ex: 20.75)</label>
+          <input id="hours" type="number" step="0.01" placeholder="0" />
+        </div>
+
+        <button id="load" class="btn-blue" type="button">Charger</button>
+        <button id="save" class="btn-ok" type="button">Sauvegarder</button>
       </div>
 
-      <div class="msg" id="msg"></div>
-      <div class="small" id="info"></div>
+      <div id="msg" class="msg"></div>
+      <div class="small">
+        Table utilisée : <b>timetracker</b> (user_id uuid, hours numeric) — 1 ligne par utilisateur.
+      </div>
     </div>
   </div>
 
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    // ✅ Mets TES infos Supabase ici
-    const SUPABASE_URL = "COLLE_ICI_TON_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "COLLE_ICI_TON_SUPABASE_ANON_KEY";
+    (function () {
+      // ✅ REMPLACE ICI
+      const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
+      const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
+      // ✅ FIN
 
-    // ✅ ta table (celle que tu as créée) :
-    const TABLE = "timetracker"; // ou "traqueur_de_temps" selon ton nom EXACT
+      const TABLE = "timetracker";
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ✅ client Supabase (sb)
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const $ = (id) => document.getElementById(id);
+      const msgBox = $("msg");
 
-    const $ = (id) => document.getElementById(id);
-    const setMsg = (t) => $("msg").textContent = t || "";
-
-    async function requireSession() {
-      const { data } = await sb.auth.getSession();
-      if (!data.session) {
-        // pas connecté => retour à index.html
-        window.location.href = "./index.html";
-        return null;
+      function msg(text, ok=true){
+        msgBox.className = "msg show " + (ok ? "ok" : "bad");
+        msgBox.textContent = text;
       }
-      return data.session;
-    }
 
-    async function init() {
-      const session = await requireSession();
-      if (!session) return;
+      let user = null;
 
-      $("emailChip").textContent = "Email : " + session.user.email;
-      $("idChip").textContent = "User ID : " + session.user.id;
-      $("info").textContent = `Table utilisée : ${TABLE} (user_id uuid, hours numeric)`;
-    }
+      async function requireSession(){
+        const { data, error } = await client.auth.getSession();
+        if (error) {
+          msg("❌ " + error.message, false);
+          return null;
+        }
+        if (!data.session){
+          // pas connecté → retour login
+          window.location.href = "./index.html";
+          return null;
+        }
+        return data.session;
+      }
 
-    $("logout").addEventListener("click", async () => {
-      await sb.auth.signOut();
-      window.location.href = "./index.html";
-    });
+      async function init(){
+        const session = await requireSession();
+        if (!session) return;
 
-    $("load").addEventListener("click", async () => {
-      const session = await requireSession();
-      if (!session) return;
+        user = session.user;
+        $("emailPill").textContent = "Email : " + (user.email || "—");
+        $("idPill").textContent = "User ID : " + user.id;
 
-      setMsg("Chargement...");
-      const { data, error } = await sb
-        .from(TABLE)
-        .select("hours")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+        msg("✅ Connecté. Tu peux Charger / Sauvegarder.");
+      }
 
-      if (error) return setMsg("❌ " + error.message);
+      $("logout").addEventListener("click", async () => {
+        await client.auth.signOut();
+        window.location.href = "./index.html";
+      });
 
-      $("hours").value = (data && data.hours != null) ? data.hours : "";
-      setMsg("✅ Chargé");
-    });
+      $("load").addEventListener("click", async () => {
+        if (!user) return msg("❌ Pas connecté.", false);
+        msg("Chargement...");
+        const { data, error } = await client
+          .from(TABLE)
+          .select("hours")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-    $("save").addEventListener("click", async () => {
-      const session = await requireSession();
-      if (!session) return;
+        if (error) return msg("❌ " + error.message, false);
 
-      setMsg("Sauvegarde...");
-      const hours = Number($("hours").value || 0);
+        $("hours").value = (data && data.hours != null) ? data.hours : "";
+        msg("✅ Chargé.");
+      });
 
-      const { error } = await sb
-        .from(TABLE)
-        .upsert({ user_id: session.user.id, hours }, { onConflict: "user_id" });
+      $("save").addEventListener("click", async () => {
+        if (!user) return msg("❌ Pas connecté.", false);
 
-      if (error) return setMsg("❌ " + error.message);
-      setMsg("✅ Sauvegardé");
-    });
+        const hours = Number($("hours").value || 0);
+        msg("Sauvegarde...");
 
-    init();
+        const { error } = await client
+          .from(TABLE)
+          .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
+
+        if (error) return msg("❌ " + error.message, false);
+
+        msg("✅ Sauvegardé.");
+      });
+
+      init();
+    })();
   </script>
 </body>
 </html>
