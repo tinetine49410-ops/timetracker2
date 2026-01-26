@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TimeTracker — App</title>
   <style>
-    :root{--bg:#05070b;--card:#0f1a2c;--border:#1f2b44;--txt:#e5e7eb;--muted:#94a3b8;--green:#10b981;--blue:#2563eb;--red:#ef4444}
+    :root{--card:#0f1a2c;--border:#1f2b44;--txt:#e5e7eb;--muted:#94a3b8;--green:#10b981;--blue:#2563eb;--red:#ef4444}
     *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
     body{margin:0;min-height:100vh;background:radial-gradient(1200px 600px at 30% 10%, #0f2345 0%, #05070b 60%, #000 100%);color:var(--txt)}
     .top{display:flex;align-items:center;justify-content:space-between;padding:20px 22px}
@@ -54,13 +54,13 @@
     </div>
   </div>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  <!-- ✅ Supabase UMD (pas module) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
+  <script>
     const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
-
-    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const TABLE = "timetracker";
 
@@ -72,59 +72,61 @@
       msgEl.textContent = text;
     }
 
-    // Session obligatoire
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) location.href = "./index.html";
+    async function requireSession(){
+      const { data } = await sb.auth.getSession();
+      if (!data || !data.session) location.href = "./index.html";
+      return data.session.user;
+    }
 
-    const user = session.user;
-    $("bEmail").textContent = "Email : " + (user.email || "—");
-    $("bUid").textContent = "User ID : " + user.id;
+    async function init(){
+      const user = await requireSession();
+      $("bEmail").textContent = "Email : " + (user.email || "—");
+      $("bUid").textContent = "User ID : " + user.id;
 
-    $("btnLogout").addEventListener("click", async () => {
-      await sb.auth.signOut();
-      location.href = "./index.html";
-    });
+      $("btnLogout").addEventListener("click", async () => {
+        await sb.auth.signOut();
+        location.href = "./index.html";
+      });
 
-    // LOAD
-    $("btnLoad").addEventListener("click", async () => {
-      try{
-        setMsg("Chargement...");
-        const { data, error } = await sb
-          .from(TABLE)
-          .select("hours")
-          .eq("user_id", user.id)
-          .maybeSingle();
+      $("btnLoad").addEventListener("click", async () => {
+        try{
+          setMsg("Chargement...");
+          const { data, error } = await sb
+            .from(TABLE)
+            .select("hours")
+            .eq("user_id", user.id)
+            .maybeSingle();
 
-        if (error) return setMsg("❌ " + error.message, "bad");
+          if (error) return setMsg("❌ " + error.message, "bad");
+          $("hours").value = (data?.hours ?? 0);
+          setMsg("✅ Chargé.", "ok");
+        }catch(e){
+          setMsg("❌ " + (e?.message || e), "bad");
+        }
+      });
 
-        $("hours").value = (data?.hours ?? 0);
-        setMsg("✅ Chargé.", "ok");
-      }catch(e){
-        setMsg("❌ " + (e?.message || e), "bad");
-      }
-    });
+      $("btnSave").addEventListener("click", async () => {
+        try{
+          const raw = ($("hours").value || "").toString().trim().replace(",", ".");
+          const hours = Number(raw);
+          if (!Number.isFinite(hours)) return setMsg("❌ Valeur heures invalide.", "bad");
 
-    // SAVE
-    $("btnSave").addEventListener("click", async () => {
-      try{
-        const raw = ($("hours").value || "").toString().trim().replace(",", ".");
-        const hours = Number(raw);
-        if (!Number.isFinite(hours)) return setMsg("❌ Valeur heures invalide.", "bad");
+          setMsg("Sauvegarde...");
+          const { error } = await sb
+            .from(TABLE)
+            .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
 
-        setMsg("Sauvegarde...");
-        const { error } = await sb
-          .from(TABLE)
-          .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
+          if (error) return setMsg("❌ " + error.message, "bad");
+          setMsg("✅ Sauvegardé.", "ok");
+        }catch(e){
+          setMsg("❌ " + (e?.message || e), "bad");
+        }
+      });
 
-        if (error) return setMsg("❌ " + error.message, "bad");
-        setMsg("✅ Sauvegardé.", "ok");
-      }catch(e){
-        setMsg("❌ " + (e?.message || e), "bad");
-      }
-    });
+      $("btnLoad").click();
+    }
 
-    // Auto load au démarrage
-    $("btnLoad").click();
+    init();
   </script>
 </body>
 </html>
