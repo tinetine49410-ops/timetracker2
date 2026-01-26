@@ -1,146 +1,31 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>TimeTracker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>TEST CLICK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body {
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      pointer-events: auto !important;
-    }
-
-    body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: system-ui, Arial, sans-serif;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .card {
-      position: relative;
-      z-index: 9999;
-      background: #1e293b;
-      padding: 24px;
-      border-radius: 16px;
-      width: 100%;
-      max-width: 360px;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 12px;
-    }
-
-    input, button {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      margin-top: 10px;
-      font-size: 15px;
-      z-index: 9999;
-      pointer-events: auto !important;
-    }
-
-    button {
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .green {
-      background: #10b981;
-      color: #000;
-    }
-
-    .blue {
-      background: #2563eb;
-      color: #fff;
-    }
-
-    .hide {
-      display: none;
-    }
-
-    .hours {
-      font-size: 48px;
-      text-align: center;
-      margin: 12px 0;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .msg {
-      text-align: center;
-      margin-top: 8px;
-      font-size: 13px;
-    }
-  </style>
+  button {
+    font-size: 24px;
+    padding: 30px;
+    cursor: pointer;
+  }
+</style>
 </head>
 
 <body>
 
-<!-- CONNEXION -->
-<div class="card" id="auth">
-  <h2>Connexion</h2>
-  <input id="email" type="email" placeholder="email">
-  <input id="password" type="password" placeholder="mot de passe">
+<button onclick="alert('CLIC OK')">
+  CLIQUE ICI
+</button>
 
-  <button class="green" onclick="login()">Se connecter</button>
-  <button class="blue" onclick="register()">Créer un compte</button>
-
-  <div class="msg" id="msg"></div>
-</div>
-
-<!-- APPLICATION -->
-<div class="card hide" id="app">
-  <h2 id="userMail"></h2>
-
-  <div class="hours" id="hours">0</div>
-
-  <div class="row">
-    <button class="green" onclick="add(0.5)">+30 min</button>
-    <button class="green" onclick="add(1)">+1 h</button>
-  </div>
-
-  <button class="blue" onclick="save()">Sauvegarder</button>
-  <button onclick="logout()">Déconnexion</button>
-</div>
-
-<script>
-  // 🔐 Supabase config
-  const supabase = window.supabase.createClient(
-    "https://nqmfrvargnwgcavmymwh.supabase.co",
-    "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH"
-  );
-
-  let user = null;
-  let total = 0;
-
-  const msg = t => document.getElementById("msg").textContent = t;
-
-  async function register() {
-    const email = emailEl().value;
-    const password = passEl().value;
-    if (!email || !password) return msg("Champs manquants");
-
-    const { error } = await supabase.auth.signUp({ email, password });
-    msg(error ? error.message : "Compte créé, connecte-toi");
-  }
-
-  async function login() {
-    const email = emailEl().value;
-    const password = passEl().value;
-
-    const
+</body>
+</html>
