@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TimeTracker — App</title>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b1020;color:#fff;min-height:100vh}
+    header{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .wrap{max-width:920px;margin:0 auto;padding:18px 16px}
+    .card{background:#111827;border-radius:16px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .pill{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:13px}
+    input{height:42px;border-radius:10px;border:0;padding:0 12px;font-size:15px}
+    button{height:44px;border-radius:12px;border:0;font-weight:800;cursor:pointer;padding:0 14px}
+    .btn{background:#2563eb;color:#fff}
+    .btn2{background:#10b981;color:#021}
+    .btnOut{background:#ef4444;color:#fff}
+    .msg{margin-top:10px;font-size:14px;opacity:.9}
+    h2{margin:0 0 10px;font-size:18px}
+  </style>
+</head>
+<body>
+  <header>
+    <div><b>TimeTracker</b> — tableau de bord</div>
+    <button id="logout" class="btnOut">Déconnexion</button>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <h2>Compte</h2>
+      <div class="row">
+        <div class="pill">Email : <span id="email">...</span></div>
+        <div class="pill">User ID : <span id="uid">...</span></div>
+      </div>
+
+      <hr style="border:0;border-top:1px solid rgba(255,255,255,.08);margin:16px 0">
+
+      <h2>Test sauvegarde (Supabase)</h2>
+      <div class="row">
+        <input id="hours" type="number" step="0.25" placeholder="ex: 20.75" />
+        <button id="load" class="btn">Charger</button>
+        <button id="save" class="btn2">Sauvegarder</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+      <div style="margin-top:10px;font-size:12px;opacity:.7">
+        Table utilisée : <b>timetracker</b> (user_id uuid, hours numeric)
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ✅ Change ici si ta table a un autre nom
+    const TABLE = "timetracker";
+
+    const $ = (id) => document.getElementById(id);
+    const msg = (t) => ($("msg").textContent = t);
+
+    // 1) Vérifie session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData?.session;
+
+    if (!session) {
+      location.href = "./index.html";
+    }
+
+    const user = session.user;
+    $("email").textContent = user.email || "";
+    $("uid").textContent = user.id;
+
+    // 2) Boutons
+    $("logout").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      location.href = "./index.html";
+    });
+
+    $("load").addEventListener("click", async () => {
+      msg("Chargement...");
+      const { data, error } = await supabase
+        .from(TABLE)
+        .select("hours")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) return msg("❌ " + error.message);
+      $("hours").value = data?.hours ?? "";
+      msg("✅ Chargé.");
+    });
+
+    $("save").addEventListener("click", async () => {
+      msg("Sauvegarde...");
+      const hours = Number($("hours").value || 0);
+
+      const { error } = await supabase
+        .from(TABLE)
+        .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
+
+      if (error) return msg("❌ " + error.message);
+      msg("✅ Sauvegardé.");
+    });
+  </script>
+</body>
+</html>
