@@ -1,31 +1,140 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>TEST CLICK</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  body {
-    background: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
+  <meta charset="UTF-8" />
+  <title>TimeTracker – Connexion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  button {
-    font-size: 24px;
-    padding: 30px;
-    cursor: pointer;
-  }
-</style>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 12px;
+      width: 320px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.6);
+    }
+
+    h2 {
+      color: #fff;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .login {
+      background: #10b981;
+      color: #000;
+    }
+
+    .register {
+      background: #2563eb;
+      color: #fff;
+    }
+  </style>
 </head>
 
 <body>
 
-<button onclick="alert('CLIC OK')">
-  CLIQUE ICI
-</button>
+  <div class="card">
+    <h2>Connexion</h2>
+
+    <input id="email" type="email" placeholder="email" />
+    <input id="password" type="password" placeholder="mot de passe" />
+
+    <button class="login" onclick="login()">Se connecter</button>
+    <button class="register" onclick="register()">Créer un compte</button>
+  </div>
+
+  <!-- SUPABASE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <script>
+    // CONFIG SUPABASE
+    const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
+
+    // IMPORTANT : on évite le nom "supabase" pour ne pas casser
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function getValues() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      return { email, password };
+    }
+
+    // LOGIN
+    window.login = async function () {
+      const { email, password } = getValues();
+      if (!email || !password) {
+        alert("Email et mot de passe obligatoires");
+        return;
+      }
+
+      const { data, error } = await sb.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        alert("Erreur connexion : " + error.message);
+        return;
+      }
+
+      alert("Connexion réussie ✅");
+      console.log("SESSION", data.session);
+    };
+
+    // REGISTER
+    window.register = async function () {
+      const { email, password } = getValues();
+      if (!email || !password) {
+        alert("Email et mot de passe obligatoires");
+        return;
+      }
+
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password
+      });
+
+      if (error) {
+        alert("Erreur création compte : " + error.message);
+        return;
+      }
+
+      alert("Compte créé ✅ (vérifie tes emails si demandé)");
+      console.log("USER", data.user);
+    };
+  </script>
 
 </body>
 </html>
