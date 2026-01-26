@@ -2,108 +2,113 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TimeTracker — App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b1020;color:#fff;min-height:100vh}
-    header{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;gap:12px;align-items:center}
-    .wrap{max-width:920px;margin:0 auto;padding:18px 16px}
-    .card{background:#111827;border-radius:16px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
-    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-    .pill{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:13px}
-    input{height:42px;border-radius:10px;border:0;padding:0 12px;font-size:15px}
-    button{height:44px;border-radius:12px;border:0;font-weight:800;cursor:pointer;padding:0 14px}
-    .btn{background:#2563eb;color:#fff}
-    .btn2{background:#10b981;color:#021}
-    .btnOut{background:#ef4444;color:#fff}
-    .msg{margin-top:10px;font-size:14px;opacity:.9}
-    h2{margin:0 0 10px;font-size:18px}
+    body{margin:0;font-family:Segoe UI,system-ui;background:#020617;color:#fff;min-height:100vh}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:rgba(15,23,42,.85);position:sticky;top:0}
+    .brand{font-weight:900}
+    .btn{padding:12px 16px;border-radius:12px;border:none;font-weight:800;cursor:pointer}
+    .danger{background:#ef4444;color:#fff}
+    .wrap{max-width:980px;margin:40px auto;padding:0 18px}
+    .card{background:#0b1222;border:1px solid rgba(148,163,184,.15);border-radius:20px;padding:22px;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+    .pill{background:#111a2f;border:1px solid rgba(148,163,184,.15);padding:8px 12px;border-radius:999px;font-size:12px;color:#cbd5e1}
+    input{padding:14px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.2);background:#0f172a;color:#fff;font-size:15px;min-width:220px}
+    .blue{background:#2563eb;color:#fff}
+    .green{background:#10b981;color:#03120c}
+    .msg{margin-top:10px;color:#cbd5e1;min-height:18px}
   </style>
 </head>
 <body>
-  <header>
-    <div><b>TimeTracker</b> — tableau de bord</div>
-    <button id="logout" class="btnOut">Déconnexion</button>
-  </header>
+  <div class="topbar">
+    <div class="brand">TimeTracker — tableau de bord</div>
+    <button id="logout" class="btn danger">Déconnexion</button>
+  </div>
 
   <div class="wrap">
     <div class="card">
-      <h2>Compte</h2>
-      <div class="row">
-        <div class="pill">Email : <span id="email">...</span></div>
-        <div class="pill">User ID : <span id="uid">...</span></div>
+      <h2 style="margin:0 0 14px;">Compte</h2>
+      <div class="row" style="margin-bottom:18px;">
+        <div class="pill" id="emailPill">Email : ...</div>
+        <div class="pill" id="idPill">User ID : ...</div>
       </div>
 
-      <hr style="border:0;border-top:1px solid rgba(255,255,255,.08);margin:16px 0">
+      <h3 style="margin:0 0 10px;">Test sauvegarde (Supabase)</h3>
 
-      <h2>Test sauvegarde (Supabase)</h2>
       <div class="row">
         <input id="hours" type="number" step="0.25" placeholder="ex: 20.75" />
-        <button id="load" class="btn">Charger</button>
-        <button id="save" class="btn2">Sauvegarder</button>
+        <button id="load" class="btn blue">Charger</button>
+        <button id="save" class="btn green">Sauvegarder</button>
       </div>
 
-      <div id="msg" class="msg"></div>
-      <div style="margin-top:10px;font-size:12px;opacity:.7">
+      <div class="msg" id="msg"></div>
+      <div style="margin-top:10px;font-size:12px;color:#94a3b8;">
         Table utilisée : <b>timetracker</b> (user_id uuid, hours numeric)
       </div>
     </div>
   </div>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
+  <script>
+    // === CONFIG (TES VALEURS) ===
     const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const TABLE = "timetracker"; // <- ta table
 
-    // ✅ Change ici si ta table a un autre nom
-    const TABLE = "timetracker";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const $ = (id) => document.getElementById(id);
-    const msg = (t) => ($("msg").textContent = t);
+    const setMsg = (t) => $("msg").textContent = t || "";
 
-    // 1) Vérifie session
-    const { data: sessionData } = await supabase.auth.getSession();
-    const session = sessionData?.session;
+    let user = null;
 
-    if (!session) {
-      location.href = "./index.html";
+    async function requireSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        location.href = "./index.html";
+        return null;
+      }
+      return session;
     }
 
-    const user = session.user;
-    $("email").textContent = user.email || "";
-    $("uid").textContent = user.id;
+    document.addEventListener("DOMContentLoaded", async () => {
+      const session = await requireSession();
+      if (!session) return;
 
-    // 2) Boutons
-    $("logout").addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      location.href = "./index.html";
-    });
+      user = session.user;
+      $("emailPill").textContent = "Email : " + (user.email || "");
+      $("idPill").textContent = "User ID : " + user.id;
 
-    $("load").addEventListener("click", async () => {
-      msg("Chargement...");
-      const { data, error } = await supabase
-        .from(TABLE)
-        .select("hours")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      $("logout").addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        location.href = "./index.html";
+      });
 
-      if (error) return msg("❌ " + error.message);
-      $("hours").value = data?.hours ?? "";
-      msg("✅ Chargé.");
-    });
+      $("load").addEventListener("click", async () => {
+        setMsg("Chargement...");
+        const { data, error } = await supabase
+          .from(TABLE)
+          .select("hours")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-    $("save").addEventListener("click", async () => {
-      msg("Sauvegarde...");
-      const hours = Number($("hours").value || 0);
+        if (error) return setMsg("❌ " + error.message);
+        $("hours").value = (data?.hours ?? "");
+        setMsg("✅ Chargé.");
+      });
 
-      const { error } = await supabase
-        .from(TABLE)
-        .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
+      $("save").addEventListener("click", async () => {
+        setMsg("Sauvegarde...");
+        const hours = Number($("hours").value || 0);
 
-      if (error) return msg("❌ " + error.message);
-      msg("✅ Sauvegardé.");
+        const { error } = await supabase
+          .from(TABLE)
+          .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
+
+        if (error) return setMsg("❌ " + error.message);
+        setMsg("✅ Sauvegardé.");
+      });
     });
   </script>
 </body>
