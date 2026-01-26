@@ -5,83 +5,113 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TimeTracker — Connexion</title>
 
-  <!-- Supabase (1 seule fois) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    body{margin:0;font-family:system-ui,Segoe UI,Arial;background:#05060a;color:#fff}
-    .overlay{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-    .card{width:100%;max-width:420px;background:#0f172a;border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-    h1{margin:0 0 16px;font-size:26px}
-    input{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:0;margin:10px 0;font-size:15px}
-    button{width:100%;padding:12px 14px;border-radius:12px;border:0;font-weight:800;font-size:15px;cursor:pointer;margin-top:10px}
-    .green{background:#10b981}
-    .blue{background:#2563eb;color:#fff}
-    .msg{margin-top:12px;opacity:.95;font-size:14px;min-height:20px}
+    :root{--bg:#05070f;--card:#0e1730;--muted:#9aa6c0;--line:#1a2a52;--ok:#19b37b;--blue:#2d6bff;--red:#ff4d4d;}
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(1200px 600px at 50% 40%, #0f1b3d 0%, var(--bg) 60%);}
+    .card{width:min(520px,92vw);background:rgba(14,23,48,.88);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 18px 60px rgba(0,0,0,.55);backdrop-filter: blur(10px);}
+    h1{margin:0 0 14px;font-size:26px;color:#fff;display:flex;gap:10px;align-items:center}
+    .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+    label{display:block;color:#cfe0ff;font-size:13px;margin:12px 0 6px}
+    input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#09112a;color:#fff;outline:none}
+    input:focus{border-color:#2d6bff}
+    .row{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+    button{flex:1;min-width:160px;border:0;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer}
+    .btn-ok{background:var(--ok);color:#052014}
+    .btn-blue{background:var(--blue);color:#fff}
+    .btn-ghost{background:transparent;color:#cfe0ff;border:1px solid var(--line)}
+    .msg{margin-top:14px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);color:#fff;background:rgba(0,0,0,.18);display:none}
+    .msg.show{display:block}
+    .msg.ok{border-color:rgba(25,179,123,.35)}
+    .msg.bad{border-color:rgba(255,77,77,.35)}
+    .small{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.35}
+    .topbar{position:fixed;left:0;right:0;top:0;padding:10px 16px;color:#cfe0ff;font-size:12px;opacity:.75}
   </style>
 </head>
-
 <body>
-  <div class="overlay">
-    <div class="card">
-      <h1>🔒 Connexion</h1>
+  <div class="topbar">TimeTracker — Connexion</div>
 
-      <input id="email" type="email" placeholder="email" autocomplete="email" />
-      <input id="password" type="password" placeholder="mot de passe" autocomplete="current-password" />
+  <div class="card">
+    <h1>🔒 Connexion</h1>
+    <p class="sub">Connecte-toi ou crée ton compte.</p>
 
-      <button class="green" id="btnLogin">Se connecter</button>
-      <button class="blue" id="btnRegister">Créer un compte</button>
+    <label for="email">Email</label>
+    <input id="email" type="email" placeholder="ex: prenom.nom@mail.com" autocomplete="email" />
 
-      <div class="msg" id="msg"></div>
+    <label for="pass">Mot de passe</label>
+    <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+    <div class="row">
+      <button id="btnLogin" class="btn-ok" type="button">Se connecter</button>
+      <button id="btnRegister" class="btn-blue" type="button">Créer un compte</button>
     </div>
+
+    <div class="row">
+      <button id="btnGoApp" class="btn-ghost" type="button">Aller au tableau de bord</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <p class="small">
+      Si tu crées un compte, regarde tes mails (parfois dossier spam) si la confirmation est activée dans Supabase.
+    </p>
   </div>
 
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    // ✅ Mets TES infos Supabase ici
-    const SUPABASE_URL = "COLLE_ICI_TON_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "COLLE_ICI_TON_SUPABASE_ANON_KEY";
+    (function () {
+      // ✅ REMPLACE ICI
+      const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
+      const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
+      // ✅ FIN
 
-    // ✅ client Supabase (on l'appelle sb, PAS supabase)
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const $ = (id) => document.getElementById(id);
-    const setMsg = (t) => $("msg").textContent = t || "";
+      const $ = (id) => document.getElementById(id);
+      const msgBox = $("msg");
+      function msg(text, ok=true){
+        msgBox.className = "msg show " + (ok ? "ok" : "bad");
+        msgBox.textContent = text;
+      }
+      function getCreds(){
+        const email = $("email").value.trim();
+        const password = $("pass").value;
+        if(!email || !password){
+          msg("❌ Mets un email et un mot de passe.", false);
+          return null;
+        }
+        return { email, password };
+      }
 
-    async function goApp() {
-      // redirige vers app.html
-      window.location.href = "./app.html";
-    }
+      // Si déjà connecté → on envoie direct vers app
+      (async () => {
+        const { data } = await client.auth.getSession();
+        if (data.session) window.location.href = "./app.html";
+      })();
 
-    async function checkSessionOnLoad() {
-      const { data } = await sb.auth.getSession();
-      if (data.session) goApp();
-    }
+      $("btnLogin").addEventListener("click", async () => {
+        const creds = getCreds(); if(!creds) return;
+        msg("Connexion...");
+        const { error } = await client.auth.signInWithPassword(creds);
+        if (error) return msg("❌ " + error.message, false);
+        msg("✅ Connexion réussie !");
+        window.location.href = "./app.html";
+      });
 
-    $("btnLogin").addEventListener("click", async () => {
-      setMsg("Connexion...");
-      const email = $("email").value.trim();
-      const password = $("password").value;
+      $("btnRegister").addEventListener("click", async () => {
+        const creds = getCreds(); if(!creds) return;
+        msg("Création du compte...");
+        const { error } = await client.auth.signUp(creds);
+        if (error) return msg("❌ " + error.message, false);
+        msg("✅ Compte créé ! (Vérifie tes emails si confirmation demandée)");
+      });
 
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) return setMsg("❌ " + error.message);
-
-      setMsg("✅ Connexion réussie");
-      goApp();
-    });
-
-    $("btnRegister").addEventListener("click", async () => {
-      setMsg("Création du compte...");
-      const email = $("email").value.trim();
-      const password = $("password").value;
-
-      const { data, error } = await sb.auth.signUp({ email, password });
-      if (error) return setMsg("❌ " + error.message);
-
-      setMsg("✅ Compte créé. (Tu peux te connecter)");
-      // parfois Supabase demande validation email selon réglage
-    });
-
-    checkSessionOnLoad();
+      $("btnGoApp").addEventListener("click", () => {
+        window.location.href = "./app.html";
+      });
+    })();
   </script>
 </body>
 </html>
