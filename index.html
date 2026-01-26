@@ -2,85 +2,73 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TimeTracker — Connexion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#000;min-height:100vh;display:grid;place-items:center}
-    .card{width:min(420px,92vw);background:#111827;border-radius:18px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.55);color:#fff}
-    h1{margin:0 0 16px;font-size:22px}
-    .row{display:flex;flex-direction:column;gap:10px}
-    input{height:44px;border-radius:10px;border:0;padding:0 12px;font-size:15px}
-    button{height:46px;border-radius:12px;border:0;font-weight:800;cursor:pointer}
-    .btn-login{background:#10b981;color:#021}
-    .btn-register{background:#2563eb;color:#fff}
-    .msg{margin-top:12px;font-size:14px;opacity:.9}
-    .small{margin-top:10px;font-size:12px;opacity:.7}
+    body{margin:0;font-family:Segoe UI,system-ui;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh}
+    .card{background:#1e293b;padding:30px;border-radius:20px;width:100%;max-width:380px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+    h2{text-align:center;margin:0 0 10px}
+    input{width:100%;padding:14px;border-radius:12px;border:none;margin-top:10px;font-size:14px}
+    button{width:100%;padding:14px;border-radius:12px;border:none;font-weight:800;margin-top:14px;cursor:pointer;font-size:14px}
+    .green{background:#10b981;color:#000}
+    .blue{background:#2563eb;color:#fff}
+    .msg{margin-top:12px;text-align:center;font-size:13px;color:#fca5a5;min-height:18px}
+    .ok{color:#86efac}
   </style>
 </head>
 <body>
+
   <div class="card">
-    <h1>🔒 Connexion</h1>
-
-    <div class="row">
-      <input id="email" type="email" placeholder="email" autocomplete="email" />
-      <input id="password" type="password" placeholder="mot de passe" autocomplete="current-password" />
-      <button id="btnLogin" class="btn-login">Se connecter</button>
-      <button id="btnRegister" class="btn-register">Créer un compte</button>
-    </div>
-
+    <h2>🔐 Connexion</h2>
+    <input id="email" type="email" placeholder="email" autocomplete="username" />
+    <input id="password" type="password" placeholder="mot de passe" autocomplete="current-password" />
+    <button id="btnLogin" class="green">Se connecter</button>
+    <button id="btnSignup" class="blue">Créer un compte</button>
     <div id="msg" class="msg"></div>
-    <div class="small">Après connexion → redirection automatique vers <b>app.html</b></div>
   </div>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
-    // ✅ Tes infos Supabase
+  <script>
+    // === CONFIG (TES VALEURS) ===
     const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const $ = (id) => document.getElementById(id);
-    const msg = (t) => ($("msg").textContent = t);
+    const setMsg = (text, ok=false) => {
+      $("msg").textContent = text || "";
+      $("msg").className = ok ? "msg ok" : "msg";
+    };
 
-    // Si déjà connecté → go app
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session) {
-      location.href = "./app.html";
-    }
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Si déjà connecté -> go app
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) location.href = "./app.html";
 
-    $("btnLogin").addEventListener("click", async () => {
-      msg("Connexion...");
-      const email = $("email").value.trim();
-      const password = $("password").value;
+      $("btnSignup").addEventListener("click", async () => {
+        setMsg("Création du compte...");
+        const email = $("email").value.trim();
+        const password = $("password").value.trim();
+        if (!email || !password) return setMsg("Email ou mot de passe manquant");
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) return setMsg("❌ " + error.message);
+        setMsg("✅ Compte créé. Tu peux te connecter.", true);
+      });
 
-      if (error) return msg("❌ " + error.message);
-      if (!data?.session) return msg("❌ Connexion impossible (pas de session).");
+      $("btnLogin").addEventListener("click", async () => {
+        setMsg("Connexion...");
+        const email = $("email").value.trim();
+        const password = $("password").value.trim();
+        if (!email || !password) return setMsg("Email ou mot de passe manquant");
 
-      msg("✅ Connexion réussie ! Redirection...");
-      setTimeout(() => (location.href = "./app.html"), 500);
-    });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return setMsg("❌ " + error.message);
 
-    $("btnRegister").addEventListener("click", async () => {
-      msg("Création du compte...");
-      const email = $("email").value.trim();
-      const password = $("password").value;
-
-      const { data, error } = await supabase.auth.signUp({ email, password });
-
-      if (error) return msg("❌ " + error.message);
-
-      // Selon réglage Supabase: parfois email de confirmation
-      if (!data?.session) {
-        msg("✅ Compte créé ! (Vérifie tes emails si confirmation activée) ثم reconnecte-toi.");
-        return;
-      }
-
-      msg("✅ Compte créé + connecté ! Redirection...");
-      setTimeout(() => (location.href = "./app.html"), 500);
+        setMsg("✅ Connexion réussie", true);
+        location.href = "./app.html";
+      });
     });
   </script>
 </body>
