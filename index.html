@@ -1,140 +1,87 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>TimeTracker – Connexion</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TimeTracker — Connexion</title>
   <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: Arial, sans-serif;
-    }
-
-    .card {
-      background: #1e293b;
-      padding: 30px;
-      border-radius: 12px;
-      width: 320px;
-      box-shadow: 0 10px 40px rgba(0,0,0,.6);
-    }
-
-    h2 {
-      color: #fff;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border-radius: 6px;
-      border: none;
-      font-size: 14px;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-
-    .login {
-      background: #10b981;
-      color: #000;
-    }
-
-    .register {
-      background: #2563eb;
-      color: #fff;
-    }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#000;min-height:100vh;display:grid;place-items:center}
+    .card{width:min(420px,92vw);background:#111827;border-radius:18px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.55);color:#fff}
+    h1{margin:0 0 16px;font-size:22px}
+    .row{display:flex;flex-direction:column;gap:10px}
+    input{height:44px;border-radius:10px;border:0;padding:0 12px;font-size:15px}
+    button{height:46px;border-radius:12px;border:0;font-weight:800;cursor:pointer}
+    .btn-login{background:#10b981;color:#021}
+    .btn-register{background:#2563eb;color:#fff}
+    .msg{margin-top:12px;font-size:14px;opacity:.9}
+    .small{margin-top:10px;font-size:12px;opacity:.7}
   </style>
 </head>
-
 <body>
-
   <div class="card">
-    <h2>Connexion</h2>
+    <h1>🔒 Connexion</h1>
 
-    <input id="email" type="email" placeholder="email" />
-    <input id="password" type="password" placeholder="mot de passe" />
+    <div class="row">
+      <input id="email" type="email" placeholder="email" autocomplete="email" />
+      <input id="password" type="password" placeholder="mot de passe" autocomplete="current-password" />
+      <button id="btnLogin" class="btn-login">Se connecter</button>
+      <button id="btnRegister" class="btn-register">Créer un compte</button>
+    </div>
 
-    <button class="login" onclick="login()">Se connecter</button>
-    <button class="register" onclick="register()">Créer un compte</button>
+    <div id="msg" class="msg"></div>
+    <div class="small">Après connexion → redirection automatique vers <b>app.html</b></div>
   </div>
 
-  <!-- SUPABASE -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-  <script>
-    // CONFIG SUPABASE
+    // ✅ Tes infos Supabase
     const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
 
-    // IMPORTANT : on évite le nom "supabase" pour ne pas casser
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function getValues() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      return { email, password };
+    const $ = (id) => document.getElementById(id);
+    const msg = (t) => ($("msg").textContent = t);
+
+    // Si déjà connecté → go app
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session) {
+      location.href = "./app.html";
     }
 
-    // LOGIN
-    window.login = async function () {
-      const { email, password } = getValues();
-      if (!email || !password) {
-        alert("Email et mot de passe obligatoires");
+    $("btnLogin").addEventListener("click", async () => {
+      msg("Connexion...");
+      const email = $("email").value.trim();
+      const password = $("password").value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) return msg("❌ " + error.message);
+      if (!data?.session) return msg("❌ Connexion impossible (pas de session).");
+
+      msg("✅ Connexion réussie ! Redirection...");
+      setTimeout(() => (location.href = "./app.html"), 500);
+    });
+
+    $("btnRegister").addEventListener("click", async () => {
+      msg("Création du compte...");
+      const email = $("email").value.trim();
+      const password = $("password").value;
+
+      const { data, error } = await supabase.auth.signUp({ email, password });
+
+      if (error) return msg("❌ " + error.message);
+
+      // Selon réglage Supabase: parfois email de confirmation
+      if (!data?.session) {
+        msg("✅ Compte créé ! (Vérifie tes emails si confirmation activée) ثم reconnecte-toi.");
         return;
       }
 
-      const { data, error } = await sb.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        alert("Erreur connexion : " + error.message);
-        return;
-      }
-
-      alert("Connexion réussie ✅");
-      console.log("SESSION", data.session);
-    };
-
-    // REGISTER
-    window.register = async function () {
-      const { email, password } = getValues();
-      if (!email || !password) {
-        alert("Email et mot de passe obligatoires");
-        return;
-      }
-
-      const { data, error } = await sb.auth.signUp({
-        email,
-        password
-      });
-
-      if (error) {
-        alert("Erreur création compte : " + error.message);
-        return;
-      }
-
-      alert("Compte créé ✅ (vérifie tes emails si demandé)");
-      console.log("USER", data.user);
-    };
+      msg("✅ Compte créé + connecté ! Redirection...");
+      setTimeout(() => (location.href = "./app.html"), 500);
+    });
   </script>
-
 </body>
 </html>
