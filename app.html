@@ -2,114 +2,128 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TimeTracker — App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Supabase (1 seule fois) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-    body{margin:0;font-family:Segoe UI,system-ui;background:#020617;color:#fff;min-height:100vh}
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:rgba(15,23,42,.85);position:sticky;top:0}
-    .brand{font-weight:900}
-    .btn{padding:12px 16px;border-radius:12px;border:none;font-weight:800;cursor:pointer}
-    .danger{background:#ef4444;color:#fff}
-    .wrap{max-width:980px;margin:40px auto;padding:0 18px}
-    .card{background:#0b1222;border:1px solid rgba(148,163,184,.15);border-radius:20px;padding:22px;box-shadow:0 30px 70px rgba(0,0,0,.45)}
-    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-    .pill{background:#111a2f;border:1px solid rgba(148,163,184,.15);padding:8px 12px;border-radius:999px;font-size:12px;color:#cbd5e1}
-    input{padding:14px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.2);background:#0f172a;color:#fff;font-size:15px;min-width:220px}
-    .blue{background:#2563eb;color:#fff}
-    .green{background:#10b981;color:#03120c}
-    .msg{margin-top:10px;color:#cbd5e1;min-height:18px}
+    body{margin:0;font-family:system-ui,Segoe UI,Arial;background:#05060a;color:#fff}
+    header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0))}
+    .btn{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}
+    .btn-red{background:#ef4444;color:#fff}
+    .wrap{padding:28px;display:flex;justify-content:center}
+    .card{width:100%;max-width:820px;background:#0f172a;border-radius:22px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+    h2{margin:0 0 10px}
+    .chips{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px}
+    .chip{background:rgba(255,255,255,.06);padding:8px 12px;border-radius:999px;font-size:13px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    input{padding:12px 14px;border-radius:12px;border:0;font-size:16px;min-width:220px}
+    .btn-blue{background:#2563eb;color:#fff}
+    .btn-green{background:#10b981;color:#0b0f14}
+    .msg{margin-top:12px;min-height:22px;font-size:14px;opacity:.95}
+    .small{margin-top:14px;opacity:.7;font-size:12px}
   </style>
 </head>
+
 <body>
-  <div class="topbar">
-    <div class="brand">TimeTracker — tableau de bord</div>
-    <button id="logout" class="btn danger">Déconnexion</button>
-  </div>
+  <header>
+    <div><b>TimeTracker</b> — tableau de bord</div>
+    <button class="btn btn-red" id="logout">Déconnexion</button>
+  </header>
 
   <div class="wrap">
     <div class="card">
-      <h2 style="margin:0 0 14px;">Compte</h2>
-      <div class="row" style="margin-bottom:18px;">
-        <div class="pill" id="emailPill">Email : ...</div>
-        <div class="pill" id="idPill">User ID : ...</div>
+      <h2>Compte</h2>
+      <div class="chips">
+        <div class="chip" id="emailChip">Email : …</div>
+        <div class="chip" id="idChip">User ID : …</div>
       </div>
 
-      <h3 style="margin:0 0 10px;">Test sauvegarde (Supabase)</h3>
-
+      <h2>Test sauvegarde (Supabase)</h2>
       <div class="row">
-        <input id="hours" type="number" step="0.25" placeholder="ex: 20.75" />
-        <button id="load" class="btn blue">Charger</button>
-        <button id="save" class="btn green">Sauvegarder</button>
+        <input id="hours" type="number" step="0.01" placeholder="ex: 20.75" />
+        <button class="btn btn-blue" id="load">Charger</button>
+        <button class="btn btn-green" id="save">Sauvegarder</button>
       </div>
 
       <div class="msg" id="msg"></div>
-      <div style="margin-top:10px;font-size:12px;color:#94a3b8;">
-        Table utilisée : <b>timetracker</b> (user_id uuid, hours numeric)
-      </div>
+      <div class="small" id="info"></div>
     </div>
   </div>
 
   <script>
-    // === CONFIG (TES VALEURS) ===
-    const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
-    const TABLE = "timetracker"; // <- ta table
+    // ✅ Mets TES infos Supabase ici
+    const SUPABASE_URL = "COLLE_ICI_TON_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "COLLE_ICI_TON_SUPABASE_ANON_KEY";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // ✅ ta table (celle que tu as créée) :
+    const TABLE = "timetracker"; // ou "traqueur_de_temps" selon ton nom EXACT
+
+    // ✅ client Supabase (sb)
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const $ = (id) => document.getElementById(id);
     const setMsg = (t) => $("msg").textContent = t || "";
 
-    let user = null;
-
     async function requireSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        location.href = "./index.html";
+      const { data } = await sb.auth.getSession();
+      if (!data.session) {
+        // pas connecté => retour à index.html
+        window.location.href = "./index.html";
         return null;
       }
-      return session;
+      return data.session;
     }
 
-    document.addEventListener("DOMContentLoaded", async () => {
+    async function init() {
       const session = await requireSession();
       if (!session) return;
 
-      user = session.user;
-      $("emailPill").textContent = "Email : " + (user.email || "");
-      $("idPill").textContent = "User ID : " + user.id;
+      $("emailChip").textContent = "Email : " + session.user.email;
+      $("idChip").textContent = "User ID : " + session.user.id;
+      $("info").textContent = `Table utilisée : ${TABLE} (user_id uuid, hours numeric)`;
+    }
 
-      $("logout").addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        location.href = "./index.html";
-      });
-
-      $("load").addEventListener("click", async () => {
-        setMsg("Chargement...");
-        const { data, error } = await supabase
-          .from(TABLE)
-          .select("hours")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (error) return setMsg("❌ " + error.message);
-        $("hours").value = (data?.hours ?? "");
-        setMsg("✅ Chargé.");
-      });
-
-      $("save").addEventListener("click", async () => {
-        setMsg("Sauvegarde...");
-        const hours = Number($("hours").value || 0);
-
-        const { error } = await supabase
-          .from(TABLE)
-          .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
-
-        if (error) return setMsg("❌ " + error.message);
-        setMsg("✅ Sauvegardé.");
-      });
+    $("logout").addEventListener("click", async () => {
+      await sb.auth.signOut();
+      window.location.href = "./index.html";
     });
+
+    $("load").addEventListener("click", async () => {
+      const session = await requireSession();
+      if (!session) return;
+
+      setMsg("Chargement...");
+      const { data, error } = await sb
+        .from(TABLE)
+        .select("hours")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (error) return setMsg("❌ " + error.message);
+
+      $("hours").value = (data && data.hours != null) ? data.hours : "";
+      setMsg("✅ Chargé");
+    });
+
+    $("save").addEventListener("click", async () => {
+      const session = await requireSession();
+      if (!session) return;
+
+      setMsg("Sauvegarde...");
+      const hours = Number($("hours").value || 0);
+
+      const { error } = await sb
+        .from(TABLE)
+        .upsert({ user_id: session.user.id, hours }, { onConflict: "user_id" });
+
+      if (error) return setMsg("❌ " + error.message);
+      setMsg("✅ Sauvegardé");
+    });
+
+    init();
   </script>
 </body>
 </html>
