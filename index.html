@@ -4,44 +4,122 @@
   <meta charset="UTF-8">
   <title>TimeTracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-    body{margin:0;font-family:system-ui;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh}
-    .card{background:#1e293b;border-radius:16px;padding:24px;width:100%;max-width:360px}
-    h2{text-align:center;margin:0 0 12px}
-    input{width:100%;padding:12px;border-radius:10px;border:none;margin:8px 0}
-    button{width:100%;padding:12px;border-radius:10px;border:none;font-weight:700;margin-top:10px}
-    .green{background:#10b981;color:#000}
-    .blue{background:#2563eb;color:#fff}
-    .row{display:flex;gap:10px}
-    .hide{display:none}
-    .hours{font-size:48px;text-align:center;margin:10px 0}
-    .msg{text-align:center;font-size:13px;margin-top:8px}
+    * {
+      box-sizing: border-box;
+      pointer-events: auto !important;
+    }
+
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: system-ui, Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      position: relative;
+      z-index: 9999;
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      margin-top: 10px;
+      font-size: 15px;
+      z-index: 9999;
+      pointer-events: auto !important;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .green {
+      background: #10b981;
+      color: #000;
+    }
+
+    .blue {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .hide {
+      display: none;
+    }
+
+    .hours {
+      font-size: 48px;
+      text-align: center;
+      margin: 12px 0;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .msg {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 13px;
+    }
   </style>
 </head>
+
 <body>
 
+<!-- CONNEXION -->
 <div class="card" id="auth">
   <h2>Connexion</h2>
   <input id="email" type="email" placeholder="email">
   <input id="password" type="password" placeholder="mot de passe">
+
   <button class="green" onclick="login()">Se connecter</button>
   <button class="blue" onclick="register()">Créer un compte</button>
+
   <div class="msg" id="msg"></div>
 </div>
 
+<!-- APPLICATION -->
 <div class="card hide" id="app">
   <h2 id="userMail"></h2>
+
   <div class="hours" id="hours">0</div>
+
   <div class="row">
     <button class="green" onclick="add(0.5)">+30 min</button>
     <button class="green" onclick="add(1)">+1 h</button>
   </div>
+
   <button class="blue" onclick="save()">Sauvegarder</button>
   <button onclick="logout()">Déconnexion</button>
 </div>
 
 <script>
+  // 🔐 Supabase config
   const supabase = window.supabase.createClient(
     "https://nqmfrvargnwgcavmymwh.supabase.co",
     "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH"
@@ -52,60 +130,17 @@
 
   const msg = t => document.getElementById("msg").textContent = t;
 
-  async function register(){
+  async function register() {
     const email = emailEl().value;
     const password = passEl().value;
-    if(!email || !password) return msg("Champs manquants");
+    if (!email || !password) return msg("Champs manquants");
+
     const { error } = await supabase.auth.signUp({ email, password });
     msg(error ? error.message : "Compte créé, connecte-toi");
   }
 
-  async function login(){
+  async function login() {
     const email = emailEl().value;
     const password = passEl().value;
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if(error) return msg(error.message);
-    user = data.user;
-    showApp();
-    load();
-  }
 
-  function add(v){
-    total += v;
-    render();
-  }
-
-  function render(){
-    document.getElementById("hours").textContent = total.toFixed(2);
-  }
-
-  async function save(){
-    await supabase.from("timetracker").upsert({ user_id: user.id, hours: total });
-    alert("Sauvegardé");
-  }
-
-  async function load(){
-    const { data } = await supabase.from("timetracker")
-      .select("hours")
-      .eq("user_id", user.id)
-      .single();
-    if(data){ total = data.hours || 0; render(); }
-  }
-
-  function logout(){
-    supabase.auth.signOut();
-    location.reload();
-  }
-
-  function showApp(){
-    document.getElementById("auth").classList.add("hide");
-    document.getElementById("app").classList.remove("hide");
-    document.getElementById("userMail").textContent = user.email;
-  }
-
-  const emailEl = () => document.getElementById("email");
-  const passEl = () => document.getElementById("password");
-</script>
-
-</body>
-</html>
+    const
