@@ -5,124 +5,126 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TimeTracker — App</title>
   <style>
-    body{margin:0;min-height:100vh;background:#05070c;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto}
-    .top{display:flex;justify-content:space-between;align-items:center;padding:22px 26px;background:linear-gradient(180deg,rgba(255,255,255,.06),transparent)}
-    .title{font-weight:800}
-    .btn-red{border:0;border-radius:12px;padding:12px 16px;background:#ef4444;color:#fff;font-weight:800;cursor:pointer}
-    .wrap{max-width:980px;margin:0 auto;padding:32px 16px}
-    .card{background:rgba(20,28,40,.85);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:26px;box-shadow:0 25px 80px rgba(0,0,0,.6)}
-    .pills{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 22px}
-    .pill{padding:10px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:13px}
-    h2{margin:0 0 14px}
-    label{display:block;opacity:.75;font-size:13px;margin:6px 0}
-    input{width:min(420px,100%);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;outline:none}
-    .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
-    button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}
-    .btn-blue{background:#2563eb;color:#eaf0ff}
-    .btn-green{background:#10b981;color:#071a12}
-    .msg{margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);min-height:22px}
-    .muted{opacity:.65;font-size:12px;margin-top:10px}
+    :root{--bg:#05070b;--card:#0f1a2c;--border:#1f2b44;--txt:#e5e7eb;--muted:#94a3b8;--green:#10b981;--blue:#2563eb;--red:#ef4444}
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;min-height:100vh;background:radial-gradient(1200px 600px at 30% 10%, #0f2345 0%, #05070b 60%, #000 100%);color:var(--txt)}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:20px 22px}
+    .title{font-weight:900;font-size:20px}
+    .logout{background:var(--red);color:#fff;border:none;padding:12px 16px;border-radius:14px;font-weight:900;cursor:pointer}
+    .wrap{max-width:980px;margin:0 auto;padding:0 18px 28px}
+    .card{margin-top:20px;background:rgba(15,26,44,.92);border:1px solid rgba(31,43,68,.9);border-radius:26px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+    h2{margin:0 0 10px}
+    .badges{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 12px}
+    .badge{background:rgba(255,255,255,.06);border:1px solid rgba(31,43,68,.9);padding:8px 10px;border-radius:999px;color:var(--txt);font-size:12px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    input{flex:1;min-width:240px;padding:14px;border-radius:14px;border:1px solid rgba(31,43,68,.9);background:rgba(255,255,255,.06);color:var(--txt);outline:none;font-weight:800}
+    .btn{padding:14px 16px;border:none;border-radius:14px;font-weight:900;cursor:pointer}
+    .b1{background:var(--blue);color:#06122a}
+    .b2{background:var(--green);color:#062014}
+    .msg{margin-top:12px;padding:12px;border-radius:14px;border:1px solid rgba(31,43,68,.9);min-height:44px;display:flex;align-items:center}
+    .ok{border-color:rgba(16,185,129,.45)}
+    .bad{border-color:rgba(239,68,68,.45)}
+    .small{margin-top:10px;font-size:12px;color:var(--muted)}
   </style>
 </head>
+
 <body>
   <div class="top">
     <div class="title">TimeTracker — tableau de bord</div>
-    <button id="logoutBtn" class="btn-red">Déconnexion</button>
+    <button id="btnLogout" class="logout">Déconnexion</button>
   </div>
 
   <div class="wrap">
     <div class="card">
       <h2>Compte</h2>
-      <div class="pills">
-        <div class="pill" id="emailPill">Email : …</div>
-        <div class="pill" id="idPill">User ID : …</div>
+      <div class="badges">
+        <div class="badge" id="bEmail">Email : …</div>
+        <div class="badge" id="bUid">User ID : …</div>
       </div>
 
       <h2>Test sauvegarde (Supabase)</h2>
-      <label for="hours">Heures (ex: 20.75)</label>
-      <input id="hours" type="number" step="0.25" placeholder="20.75" />
-
       <div class="row">
-        <button id="loadBtn" class="btn-blue">Charger</button>
-        <button id="saveBtn" class="btn-green">Sauvegarder</button>
+        <input id="hours" inputmode="decimal" placeholder="Heures (ex: 20.75)" />
+        <button id="btnLoad" class="btn b1">Charger</button>
+        <button id="btnSave" class="btn b2">Sauvegarder</button>
       </div>
 
-      <div id="msg" class="msg"></div>
-      <div class="muted">Table utilisée : <b>timetracker</b> (user_id uuid, hours numeric) — 1 ligne par utilisateur</div>
+      <div id="msg" class="msg">Prêt.</div>
+      <div class="small">Table utilisée : <b>timetracker</b> (user_id uuid, hours numeric) — 1 ligne par utilisateur.</div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    // ✅ TES INFOS
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
     const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
 
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const TABLE = "timetracker";
 
-    const $ = (id) => document.getElementById(id);
-    const msg = (t, ok=true) => {
-      const el = $("msg");
-      el.textContent = t;
-      el.style.color = ok ? "#86efac" : "#fca5a5";
-    };
+    const $ = (id)=>document.getElementById(id);
+    const msgEl = $("msg");
 
-    async function requireSession() {
-      const { data } = await sb.auth.getSession();
-      const session = data?.session;
-      if (!session) {
-        window.location.href = "./index.html";
-        return null;
-      }
-      $("emailPill").textContent = "Email : " + (session.user.email || "—");
-      $("idPill").textContent = "User ID : " + session.user.id;
-      return session;
+    function setMsg(text, type=""){
+      msgEl.className = "msg " + (type || "");
+      msgEl.textContent = text;
     }
 
-    $("logoutBtn").addEventListener("click", async () => {
+    // Session obligatoire
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) location.href = "./index.html";
+
+    const user = session.user;
+    $("bEmail").textContent = "Email : " + (user.email || "—");
+    $("bUid").textContent = "User ID : " + user.id;
+
+    $("btnLogout").addEventListener("click", async () => {
       await sb.auth.signOut();
-      window.location.href = "./index.html";
+      location.href = "./index.html";
     });
 
-    $("loadBtn").addEventListener("click", async () => {
-      const session = await requireSession();
-      if (!session) return;
-      msg("Chargement…");
+    // LOAD
+    $("btnLoad").addEventListener("click", async () => {
+      try{
+        setMsg("Chargement...");
+        const { data, error } = await sb
+          .from(TABLE)
+          .select("hours")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-      const { data, error } = await sb
-        .from(TABLE)
-        .select("hours")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+        if (error) return setMsg("❌ " + error.message, "bad");
 
-      if (error) return msg("❌ " + error.message, false);
-      $("hours").value = (data?.hours ?? "");
-      msg("✅ Chargé.");
+        $("hours").value = (data?.hours ?? 0);
+        setMsg("✅ Chargé.", "ok");
+      }catch(e){
+        setMsg("❌ " + (e?.message || e), "bad");
+      }
     });
 
-    $("saveBtn").addEventListener("click", async () => {
-      const session = await requireSession();
-      if (!session) return;
+    // SAVE
+    $("btnSave").addEventListener("click", async () => {
+      try{
+        const raw = ($("hours").value || "").toString().trim().replace(",", ".");
+        const hours = Number(raw);
+        if (!Number.isFinite(hours)) return setMsg("❌ Valeur heures invalide.", "bad");
 
-      const hours = Number($("hours").value || 0);
-      msg("Sauvegarde…");
+        setMsg("Sauvegarde...");
+        const { error } = await sb
+          .from(TABLE)
+          .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
 
-      const { error } = await sb
-        .from(TABLE)
-        .upsert({ user_id: session.user.id, hours }, { onConflict: "user_id" });
-
-      if (error) return msg("❌ " + error.message, false);
-      msg("✅ Sauvegardé.");
+        if (error) return setMsg("❌ " + error.message, "bad");
+        setMsg("✅ Sauvegardé.", "ok");
+      }catch(e){
+        setMsg("❌ " + (e?.message || e), "bad");
+      }
     });
 
-    // init
-    (async () => {
-      const session = await requireSession();
-      if (!session) return;
-      // charge auto au démarrage
-      $("loadBtn").click();
-    })();
+    // Auto load au démarrage
+    $("btnLoad").click();
   </script>
 </body>
 </html>
