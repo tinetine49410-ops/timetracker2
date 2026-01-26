@@ -3,84 +3,445 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TimeTracker — Connexion</title>
+  <title>TimeTracker</title>
+
   <style>
-    body{margin:0;min-height:100vh;display:grid;place-items:center;background:#000;font-family:system-ui,-apple-system,Segoe UI,Roboto}
-    .card{width:min(520px,92vw);background:rgba(20,28,40,.9);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:28px;box-shadow:0 25px 80px rgba(0,0,0,.6)}
-    h1{margin:0 0 18px;color:#fff;font-size:28px;text-align:center}
-    label{display:block;color:rgba(255,255,255,.75);font-size:13px;margin:12px 0 6px}
-    input{width:100%;padding:14px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;outline:none}
-    .row{display:flex;gap:12px;margin-top:16px}
-    button{flex:1;border:0;border-radius:12px;padding:14px 16px;font-weight:700;cursor:pointer}
-    .btn-green{background:#10b981;color:#071a12}
-    .btn-blue{background:#2563eb;color:#eaf0ff}
-    .msg{margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#fff;min-height:22px}
-    .muted{opacity:.7;font-size:12px;margin-top:10px;text-align:center;color:#fff}
+    :root{
+      --bg:#060a12; --card:#0c1424cc; --card2:#0c1424;
+      --text:#eaf0ff; --muted:#a9b6d6; --line:#1f2b45;
+      --green:#17c07d; --blue:#2d6cff; --red:#ff4d4d;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --radius: 22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 50% 30%, #0c1a38 0%, var(--bg) 55%, #000 100%);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{width:min(980px, 100%);}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:18px;
+      opacity:.95;
+    }
+    .title{font-weight:800; letter-spacing:.2px}
+    .btn{
+      border:0; cursor:pointer;
+      padding:12px 16px;
+      border-radius:14px;
+      color:#06121a;
+      font-weight:800;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      transition: transform .05s ease;
+      user-select:none;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn-green{background:var(--green)}
+    .btn-blue{background:var(--blue); color:#fff}
+    .btn-red{background:var(--red); color:#fff}
+    .pill{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 14px; border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(10,16,28,.55);
+      color: var(--text);
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(14,22,40,.85), rgba(10,16,28,.65));
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .center{
+      display:flex; justify-content:center;
+    }
+    .panel{
+      width:min(560px, 100%);
+      margin: 0 auto;
+    }
+    h2{margin:0 0 12px 0}
+    .sub{color:var(--muted); margin:0 0 16px 0; font-size:14px}
+    label{display:block; color:var(--muted); font-size:13px; margin:14px 0 6px}
+    input, select{
+      width:100%;
+      padding:14px 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      outline:none;
+    }
+    .row{display:flex; gap:12px; flex-wrap:wrap}
+    .row > *{flex:1}
+    .actions{display:flex; gap:12px; margin-top:16px; flex-wrap:wrap}
+    .msg{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      min-height: 44px;
+      display:flex;
+      align-items:center;
+    }
+    .hidden{display:none !important}
+    .big{
+      padding:16px 18px;
+      border-radius:16px;
+      font-size:16px;
+      width:100%;
+      justify-content:center;
+    }
+
+    /* Dashboard */
+    .dash{width:min(980px, 100%); margin: 0 auto;}
+    .dashGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:18px;
+    }
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
+    .small{font-size:13px; color:var(--muted)}
   </style>
+
+  <!-- Supabase UMD (PAS module) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
-  <div class="card">
-    <h1>🔐 Connexion</h1>
-
-    <label for="email">Email</label>
-    <input id="email" type="email" placeholder="email" autocomplete="email" />
-
-    <label for="pass">Mot de passe</label>
-    <input id="pass" type="password" placeholder="mot de passe" autocomplete="current-password" />
-
-    <div class="row">
-      <button id="loginBtn" class="btn-green">Se connecter</button>
-      <button id="registerBtn" class="btn-blue">Créer un compte</button>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">TimeTracker</div>
+      <button id="logoutBtn" class="btn btn-red hidden" type="button">Déconnexion</button>
     </div>
 
-    <div id="msg" class="msg"></div>
-    <div class="muted">Après connexion → redirection vers <b>app.html</b></div>
+    <!-- LOGIN -->
+    <section id="loginView" class="panel card">
+      <h2>🔐 Connexion</h2>
+      <p class="sub">Connexion par e-mail / mot de passe (Supabase).</p>
+
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" placeholder="email" />
+
+      <label for="password">Mot de passe</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="mot de passe" />
+
+      <div class="actions">
+        <button id="loginBtn" class="btn btn-green big" type="button">Se connecter</button>
+        <button id="registerBtn" class="btn btn-blue big" type="button">Créer un compte</button>
+      </div>
+
+      <div id="loginMsg" class="msg">Prêt.</div>
+    </section>
+
+    <!-- STARTUP CONFIG -->
+    <section id="startupView" class="panel card hidden">
+      <h2>🚀 Configuration initiale</h2>
+      <p class="sub">Obligatoire avant d’utiliser l’application.</p>
+
+      <label for="fullName">Nom / Prénom</label>
+      <input id="fullName" type="text" placeholder="Ex : PETIT Clément" />
+
+      <label for="startBalance">Solde départ (heures)</label>
+      <input id="startBalance" type="text" inputmode="decimal" placeholder="Ex : 20.75" />
+
+      <label for="startDate">Date de début du suivi</label>
+      <input id="startDate" type="date" />
+
+      <label for="contract">Contrat</label>
+      <select id="contract">
+        <option value="39/38">39h travaillées / 38h payées</option>
+        <option value="35">35h</option>
+        <option value="autre">Autre</option>
+      </select>
+
+      <div class="actions">
+        <button id="startBtn" class="btn btn-green big" type="button">▶ Démarrer l’application</button>
+      </div>
+
+      <div id="startupMsg" class="msg">Remplis puis clique sur “Démarrer”.</div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="appView" class="dash hidden">
+      <div class="dashGrid">
+        <div class="card">
+          <h2>Compte</h2>
+          <div class="row" style="margin-top:10px">
+            <div class="pill"><span class="small">Email :</span> <span id="userEmail" class="mono">…</span></div>
+            <div class="pill"><span class="small">User ID :</span> <span id="userId" class="mono">…</span></div>
+          </div>
+
+          <hr style="border:0;border-top:1px solid var(--line); margin:18px 0">
+
+          <h2>Test sauvegarde (Supabase)</h2>
+          <p class="sub">Table utilisée : <span class="mono">timetracker(user_id uuid, hours numeric)</span> — 1 ligne par utilisateur.</p>
+
+          <label for="hours">Heures</label>
+          <input id="hours" type="text" inputmode="decimal" placeholder="Ex : 20.75" />
+
+          <div class="actions">
+            <button id="loadBtn" class="btn btn-blue" type="button">Charger</button>
+            <button id="saveBtn" class="btn btn-green" type="button">Sauvegarder</button>
+          </div>
+
+          <div id="appMsg" class="msg">Prêt.</div>
+
+          <div class="actions" style="margin-top:14px">
+            <button id="resetStartupBtn" class="btn" type="button" style="background:#ffffff12;color:#fff;border:1px solid var(--line)">
+              ⚙️ Refaire la configuration initiale
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // ✅ TES INFOS
+    // =========================
+    // 1) SUPABASE CONFIG
+    // =========================
     const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
 
-    // ✅ pas de conflit: on n’appelle PAS la variable "supabase"
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // IMPORTANT : 1 seule instance !
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Table Supabase pour le test hours
+    const TABLE = "timetracker"; // (user_id uuid, hours numeric)
+
+    // =========================
+    // 2) HELPERS
+    // =========================
     const $ = (id) => document.getElementById(id);
-    const msg = (t, ok=true) => {
-      const el = $("msg");
-      el.textContent = t;
-      el.style.color = ok ? "#86efac" : "#fca5a5";
-    };
 
-    async function goApp(){
-      window.location.href = "./app.html";
+    function setMsg(id, text) {
+      $(id).textContent = text;
     }
 
-    $("loginBtn").addEventListener("click", async () => {
-      msg("Connexion…");
-      const email = $("email").value.trim();
-      const password = $("pass").value;
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) return msg("❌ " + error.message, false);
-      msg("✅ Connexion réussie");
-      await goApp();
-    });
+    // accepte 20,75 ou 20.75
+    function parseNumberFr(v) {
+      const s = String(v ?? "").trim().replace(",", ".");
+      const n = Number(s);
+      return Number.isFinite(n) ? n : null;
+    }
 
-    $("registerBtn").addEventListener("click", async () => {
-      msg("Création du compte…");
-      const email = $("email").value.trim();
-      const password = $("pass").value;
-      const { error } = await sb.auth.signUp({ email, password });
-      if (error) return msg("❌ " + error.message, false);
-      msg("✅ Compte créé. Tu peux te connecter.");
-    });
+    function show(viewId) {
+      $("loginView").classList.add("hidden");
+      $("startupView").classList.add("hidden");
+      $("appView").classList.add("hidden");
+      $(viewId).classList.remove("hidden");
+      $("logoutBtn").classList.toggle("hidden", viewId === "loginView");
+    }
 
-    // Si déjà connecté → direct app
+    // Startup local config key (par utilisateur)
+    function startupKey(userId) {
+      return `timetracker_startup_${userId}`;
+    }
+
+    async function getUser() {
+      const { data } = await supabase.auth.getUser();
+      return data?.user || null;
+    }
+
+    // =========================
+    // 3) AUTH
+    // =========================
+    async function login() {
+      try {
+        setMsg("loginMsg", "Connexion...");
+        const email = $("email").value.trim();
+        const password = $("password").value;
+
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        setMsg("loginMsg", "✅ Connexion réussie.");
+        await routeAfterAuth();
+      } catch (e) {
+        setMsg("loginMsg", "❌ " + (e?.message || String(e)));
+      }
+    }
+
+    async function register() {
+      try {
+        setMsg("loginMsg", "Création du compte...");
+        const email = $("email").value.trim();
+        const password = $("password").value;
+
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+
+        setMsg("loginMsg", "✅ Compte créé. Tu peux te connecter.");
+      } catch (e) {
+        setMsg("loginMsg", "❌ " + (e?.message || String(e)));
+      }
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      show("loginView");
+      setMsg("loginMsg", "Déconnecté.");
+    }
+
+    // =========================
+    // 4) STARTUP CONFIG
+    // =========================
+    async function saveStartup() {
+      try {
+        const user = await getUser();
+        if (!user) {
+          show("loginView");
+          return;
+        }
+
+        const fullName = $("fullName").value.trim();
+        const startBalance = parseNumberFr($("startBalance").value);
+        const startDate = $("startDate").value;
+        const contract = $("contract").value;
+
+        if (!fullName) return setMsg("startupMsg", "❌ Mets ton Nom / Prénom.");
+        if (startBalance === null) return setMsg("startupMsg", "❌ Solde départ invalide (ex: 20.75).");
+        if (!startDate) return setMsg("startupMsg", "❌ Choisis une date de début.");
+
+        const payload = { fullName, startBalance, startDate, contract, savedAt: new Date().toISOString() };
+        localStorage.setItem(startupKey(user.id), JSON.stringify(payload));
+
+        setMsg("startupMsg", "✅ Enregistré. Ouverture du tableau de bord...");
+        await openDashboard();
+      } catch (e) {
+        setMsg("startupMsg", "❌ " + (e?.message || String(e)));
+      }
+    }
+
+    async function openDashboard() {
+      const user = await getUser();
+      if (!user) return show("loginView");
+
+      $("userEmail").textContent = user.email || "—";
+      $("userId").textContent = user.id;
+
+      // pré-rempli depuis startup si existe
+      const raw = localStorage.getItem(startupKey(user.id));
+      if (raw) {
+        try {
+          const cfg = JSON.parse(raw);
+          // exemple : tu peux utiliser cfg.startBalance comme base
+          // ici on laisse le champ libre
+        } catch {}
+      }
+
+      show("appView");
+      setMsg("appMsg", "Prêt.");
+    }
+
+    async function resetStartup() {
+      const user = await getUser();
+      if (!user) return;
+      localStorage.removeItem(startupKey(user.id));
+      show("startupView");
+      setMsg("startupMsg", "Configuration remise à zéro. Remplis puis démarre.");
+    }
+
+    // =========================
+    // 5) SUPABASE SAVE / LOAD
+    // =========================
+    async function loadHours() {
+      try {
+        setMsg("appMsg", "Chargement...");
+        const user = await getUser();
+        if (!user) return show("loginView");
+
+        const { data, error } = await supabase
+          .from(TABLE)
+          .select("hours")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        $("hours").value = (data?.hours ?? 0);
+        setMsg("appMsg", "✅ Chargé.");
+      } catch (e) {
+        setMsg("appMsg", "❌ " + (e?.message || String(e)));
+      }
+    }
+
+    async function saveHours() {
+      try {
+        setMsg("appMsg", "Sauvegarde...");
+        const user = await getUser();
+        if (!user) return show("loginView");
+
+        const hours = parseNumberFr($("hours").value);
+        if (hours === null) return setMsg("appMsg", "❌ Heures invalides (ex: 20.75).");
+
+        const { error } = await supabase
+          .from(TABLE)
+          .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
+
+        if (error) throw error;
+
+        setMsg("appMsg", "✅ Sauvegardé.");
+      } catch (e) {
+        setMsg("appMsg", "❌ " + (e?.message || String(e)));
+      }
+    }
+
+    // =========================
+    // 6) ROUTING
+    // =========================
+    async function routeAfterAuth() {
+      const user = await getUser();
+      if (!user) return show("loginView");
+
+      $("userEmail").textContent = user.email || "—";
+      $("userId").textContent = user.id;
+
+      const raw = localStorage.getItem(startupKey(user.id));
+      if (!raw) {
+        show("startupView");
+        setMsg("startupMsg", "Remplis puis clique sur “Démarrer”.");
+        return;
+      }
+      show("appView");
+      setMsg("appMsg", "Prêt.");
+    }
+
+    // =========================
+    // 7) EVENTS
+    // =========================
+    $("loginBtn").addEventListener("click", login);
+    $("registerBtn").addEventListener("click", register);
+    $("logoutBtn").addEventListener("click", logout);
+
+    $("startBtn").addEventListener("click", saveStartup);
+
+    $("loadBtn").addEventListener("click", loadHours);
+    $("saveBtn").addEventListener("click", saveHours);
+    $("resetStartupBtn").addEventListener("click", resetStartup);
+
+    // au chargement : si session existante => route
     (async () => {
-      const { data } = await sb.auth.getSession();
-      if (data?.session) goApp();
+      const user = await getUser();
+      if (user) await routeAfterAuth();
+      else show("loginView");
     })();
+
+    // si l’état de session change (connexion / déconnexion)
+    supabase.auth.onAuthStateChange(async (_event, _session) => {
+      await routeAfterAuth();
+    });
   </script>
 </body>
 </html>
