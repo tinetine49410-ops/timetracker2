@@ -2,45 +2,23 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TimeTracker — Connexion</title>
-  <meta name="theme-color" content="#0b1020" />
-  <link rel="manifest" href="manifest.json" />
   <style>
-    :root {
-      --bg:#05060a; --card:#0b1020cc; --stroke:#1a2a45; --text:#e9eefc;
-      --muted:#a6b3d6; --green:#19c37d; --blue:#3578ff; --red:#ff4b4b;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
-      background:radial-gradient(1200px 600px at 30% 20%, #0b1633 0%, #05060a 55%, #000 100%);
-      color:var(--text); padding:24px;
-    }
-    .card{width:min(520px,100%); background:var(--card); border:1px solid var(--stroke);
-      border-radius:22px; box-shadow:0 18px 60px rgba(0,0,0,.55); padding:22px 22px 18px;
-      backdrop-filter: blur(10px);
-    }
-    h1{margin:0 0 6px; font-size:26px}
-    p{margin:0 0 16px; color:var(--muted)}
-    label{display:block; font-size:14px; color:var(--muted); margin:12px 0 6px}
-    input{width:100%; padding:14px 14px; border-radius:14px; border:1px solid var(--stroke);
-      background:#0b1225; color:var(--text); outline:none;
-    }
-    .row{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
-    button{flex:1; min-width:200px; cursor:pointer; padding:14px 14px; border-radius:14px;
-      border:0; font-weight:700; letter-spacing:.2px;
-    }
-    .primary{background:var(--green); color:#062012}
-    .secondary{background:var(--blue); color:#06122b}
-    .ghost{background:transparent; border:1px solid var(--stroke); color:var(--text)}
-    .msg{margin-top:14px; padding:12px 12px; border-radius:14px; border:1px solid var(--stroke);
-      background:#0b1225; color:var(--muted); min-height:44px;
-    }
-    .ok{color:#7CFFB2}
-    .err{color:#ff8a8a}
-    .small{margin-top:10px; color:var(--muted); font-size:12px; line-height:1.35}
-    a{color:var(--muted)}
+    :root{--bg:#060a12;--card:#0b1426;--card2:#0e1a31;--txt:#eaf1ff;--mut:#9bb0d1;--g:#11c47e;--b:#2f73ff;--r:#ff4b4b}
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(900px 500px at 30% 15%, #0b1e44 0%, transparent 60%),var(--bg);color:var(--txt)}
+    .card{width:min(520px,92vw);background:linear-gradient(180deg,var(--card) 0%,var(--card2) 100%);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:26px;box-shadow:0 18px 80px rgba(0,0,0,.55)}
+    h1{margin:0 0 6px;font-size:26px}
+    p{margin:0 0 18px;color:var(--mut)}
+    label{display:block;margin:12px 0 6px;color:var(--mut);font-size:13px}
+    input{width:100%;padding:14px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);color:var(--txt);outline:none}
+    .row{display:flex;gap:12px;margin-top:16px}
+    button{flex:1;border:none;border-radius:14px;padding:14px 14px;font-weight:800;cursor:pointer}
+    .ok{background:var(--g);color:#001b10}
+    .blue{background:var(--b);color:white}
+    .msg{margin-top:14px;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);color:var(--mut);min-height:44px;display:flex;align-items:center}
+    .small{margin-top:10px;color:var(--mut);font-size:12px}
   </style>
 </head>
 <body>
@@ -48,82 +26,63 @@
     <h1>🔐 Connexion</h1>
     <p>Connexion par e-mail / mot de passe (Supabase).</p>
 
-    <label for="email">Email</label>
-    <input id="email" type="email" autocomplete="email" placeholder="ex: prenom.nom@exemple.com" />
+    <label>Email</label>
+    <input id="email" type="email" placeholder="ex: nom@domaine.fr" autocomplete="email"/>
 
-    <label for="password">Mot de passe</label>
-    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-
-    <div class="row">
-      <button id="login" class="primary" type="button">Se connecter</button>
-      <button id="signup" class="secondary" type="button">Créer un compte</button>
-    </div>
+    <label>Mot de passe</label>
+    <input id="password" type="password" placeholder="••••••••" autocomplete="current-password"/>
 
     <div class="row">
-      <button id="logout" class="ghost" type="button">Se déconnecter</button>
+      <button class="ok" id="loginBtn">Se connecter</button>
+      <button class="blue" id="signupBtn">Créer un compte</button>
     </div>
 
-    <div id="msg" class="msg">Prêt.</div>
-    <div class="small">
-      Après connexion, tu es envoyé vers <b>app.html</b>.
-      <br/>Astuce : si tu utilises GitHub Pages, garde <b>index.html</b> comme page d’entrée.
-    </div>
+    <div class="msg" id="msg">Prêt.</div>
+    <div class="small">Après connexion, tu es envoyé vers <b>app.html</b>.</div>
   </div>
 
+  <!-- Supabase UMD (stable, pas de problème "createClient export") -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // --- PWA ---
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-    }
-
+    // ✅ CONFIG
     const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const $ = (id) => document.getElementById(id);
-    const msg = (t, ok=false) => {
-      const el = $('msg');
-      el.textContent = t;
-      el.className = 'msg ' + (ok ? 'ok' : '');
-      if (!ok) el.classList.remove('ok');
-    };
-    const err = (t) => {
-      const el = $('msg');
-      el.textContent = t;
-      el.className = 'msg err';
-    };
+    const setMsg = (t) => $("msg").textContent = t;
 
-    async function goIfSession() {
+    async function goIfConnected() {
       const { data } = await sb.auth.getSession();
-      if (data?.session) location.href = './app.html';
+      if (data?.session?.user) window.location.href = "./app.html";
     }
+    goIfConnected();
 
-    $('login').addEventListener('click', async () => {
-      msg('Connexion…');
-      const email = $('email').value.trim();
-      const password = $('password').value;
+    $("loginBtn").addEventListener("click", async () => {
+      setMsg("Connexion...");
+      const email = $("email").value.trim();
+      const password = $("password").value;
+
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) return err('❌ ' + error.message);
-      msg('✅ Connexion réussie', true);
-      location.href = './app.html';
+      if (error) return setMsg("❌ " + error.message);
+
+      setMsg("✅ Connexion réussie.");
+      window.location.href = "./app.html";
     });
 
-    $('signup').addEventListener('click', async () => {
-      msg('Création du compte…');
-      const email = $('email').value.trim();
-      const password = $('password').value;
+    $("signupBtn").addEventListener("click", async () => {
+      setMsg("Création du compte...");
+      const email = $("email").value.trim();
+      const password = $("password").value;
+
       const { data, error } = await sb.auth.signUp({ email, password });
-      if (error) return err('❌ ' + error.message);
-      msg('✅ Compte créé. Tu peux te connecter.', true);
-    });
+      if (error) return setMsg("❌ " + error.message);
 
-    $('logout').addEventListener('click', async () => {
-      await sb.auth.signOut();
-      msg('Déconnecté.', true);
+      // Selon tes réglages Supabase, il peut demander confirmation email.
+      setMsg("✅ Compte créé. Si Supabase demande un mail de confirmation : confirme puis reconnecte-toi.");
     });
-
-    goIfSession();
   </script>
 </body>
 </html>
