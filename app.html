@@ -1,294 +1,65 @@
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TimeTracker — App</title>
-  <style>
-    :root{--bg:#060a12;--card:#0b1426;--card2:#0e1a31;--txt:#eaf1ff;--mut:#9bb0d1;--g:#11c47e;--b:#2f73ff;--r:#ff4b4b}
-    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    body{margin:0;min-height:100vh;background:radial-gradient(1000px 520px at 30% 15%, #0b1e44 0%, transparent 60%),var(--bg);color:var(--txt)}
-    header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px}
-    header h1{margin:0;font-size:18px;font-weight:900;letter-spacing:.2px}
-    .btn{border:none;border-radius:14px;padding:12px 14px;font-weight:900;cursor:pointer}
-    .btn.red{background:var(--r);color:white}
-    .btn.blue{background:var(--b);color:white}
-    .btn.green{background:var(--g);color:#001b10}
-    .wrap{display:grid;place-items:center;padding:26px}
-    .card{width:min(980px,94vw);background:linear-gradient(180deg,var(--card) 0%,var(--card2) 100%);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:24px;box-shadow:0 18px 80px rgba(0,0,0,.55)}
-    .title{font-size:34px;margin:0 0 10px;font-weight:900}
-    .pill{display:inline-flex;gap:8px;align-items:center;padding:9px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);color:var(--mut);font-size:13px}
-    .line{height:1px;background:rgba(255,255,255,.10);margin:18px 0}
-    label{display:block;margin:12px 0 6px;color:var(--mut);font-size:13px}
-    input,select{width:100%;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);color:var(--txt);outline:none}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .grid1{display:grid;grid-template-columns:1fr;gap:14px}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:14px}
-    .msg{margin-top:14px;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);color:var(--mut);min-height:44px;display:flex;align-items:center}
-    .hidden{display:none!important}
-    .bigcenter{width:min(520px,92vw)}
-    .small{color:var(--mut);font-size:12px;margin-top:8px}
-  </style>
-</head>
-<body>
-  <header>
-    <h1>TimeTracker — tableau de bord</h1>
-    <button class="btn red" id="logoutBtn">Déconnexion</button>
-  </header>
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-  <div class="wrap">
+/* =========================
+   CONFIG SUPABASE
+========================= */
+const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <!-- ✅ STARTUP CONFIG (collègue) -->
-    <div class="card bigcenter" id="startupCard">
-      <h2 style="margin:0 0 6px;font-size:22px;font-weight:900">🚀 Configuration initiale</h2>
-      <div class="small">Obligatoire avant d’utiliser l’application (stocké dans Supabase, lié à ton compte).</div>
+/* =========================
+   ELEMENTS
+========================= */
+const btnStart = document.getElementById("btnStart");
+const msg = document.getElementById("startupMsg");
 
-      <label>Nom / Prénom</label>
-      <input id="fullName" placeholder="ex: DUPONT Jean"/>
+const fullnameEl = document.getElementById("startup_name");
+const balanceEl = document.getElementById("startup_balance");
+const dateEl = document.getElementById("startup_date");
+const contractEl = document.getElementById("startup_contract");
 
-      <label>Solde départ (heures)</label>
-      <input id="startBalance" placeholder="ex: 20.75" inputmode="decimal"/>
+/* =========================
+   SESSION
+========================= */
+const { data: { session } } = await supabase.auth.getSession();
+if (!session) location.href = "index.html";
+const user = session.user;
 
-      <label>Date de début du suivi</label>
-      <input id="startDate" type="date"/>
+/* =========================
+   SAVE STARTUP
+========================= */
+async function startupSave() {
+  msg.textContent = "⏳ Sauvegarde…";
 
-      <label>Contrat</label>
-      <select id="contract">
-        <option value="39/38">39h travaillées / 38h payées</option>
-        <option value="35">35h</option>
-        <option value="autre">Autre</option>
-      </select>
+  const payload = {
+    user_id: user.id,
+    fullname: fullnameEl.value.trim(),
+    start_balance: Number(balanceEl.value || 0),
+    start_date: dateEl.value,
+    contract: contractEl.value
+  };
 
-      <div class="row">
-        <button class="btn green" id="startBtn">▶ Démarrer l’application</button>
-      </div>
+  if (!payload.fullname || !payload.start_date) {
+    msg.textContent = "❌ Champs obligatoires manquants";
+    return;
+  }
 
-      <div class="msg" id="startupMsg">Prêt.</div>
-    </div>
+  const { error } = await supabase
+    .from("timetracker_profile")
+    .upsert(payload, { onConflict: "user_id" });
 
-    <!-- ✅ DASHBOARD -->
-    <div class="card hidden" id="dashCard">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <div class="pill" id="emailPill">Email : ...</div>
-        <div class="pill" id="userPill">User ID : ...</div>
-        <div class="pill" id="namePill">Nom : ...</div>
-      </div>
+  if (error) {
+    msg.textContent = "❌ " + error.message;
+    return;
+  }
 
-      <div class="line"></div>
+  msg.textContent = "✅ Configuration enregistrée";
+  setTimeout(() => location.reload(), 600);
+}
 
-      <h2 style="margin:0 0 10px;font-size:22px;font-weight:900">Test sauvegarde (Supabase)</h2>
-      <div class="small">Table utilisée : <b>timetracker</b> (user_id uuid, hours numeric) — 1 ligne par utilisateur.</div>
-
-      <label>Heures (ex: 20.75)</label>
-      <input id="hours" inputmode="decimal" placeholder="ex: 20.75"/>
-
-      <div class="row">
-        <button class="btn blue" id="loadBtn">Charger</button>
-        <button class="btn green" id="saveBtn">Sauvegarder</button>
-      </div>
-
-      <div class="msg" id="msg">Prêt.</div>
-    </div>
-
-  </div>
-
-  <!-- Supabase UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    // ✅ CONFIG SUPABASE
-    const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
-
-    // ✅ Tables
-    const TABLE_HOURS = "timetracker";
-    const TABLE_PROFILE = "timetracker_profile";
-
-    const { createClient } = supabase;
-    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const $ = (id) => document.getElementById(id);
-    const setMsg = (t) => $("msg").textContent = t;
-    const setStartupMsg = (t) => $("startupMsg").textContent = t;
-
-    const parseHours = (val) => {
-      const v = String(val ?? "").trim().replace(",", ".");
-      const n = Number(v);
-      return Number.isFinite(n) ? n : null;
-    };
-
-    async function ensureSession() {
-      const { data } = await sb.auth.getSession();
-      if (!data?.session?.user) {
-        window.location.href = "./index.html";
-        return null;
-      }
-      return data.session.user;
-    }
-
-    async function loadProfile(user) {
-      const { data, error } = await sb
-        .from(TABLE_PROFILE)
-        .select("full_name,start_balance,start_date,contract")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data; // null si pas encore créé
-    }
-
-    function showStartup(user) {
-      $("startupCard").classList.remove("hidden");
-      $("dashCard").classList.add("hidden");
-      setStartupMsg("Prêt.");
-
-      // préremplissage léger
-      $("startDate").value = new Date().toISOString().slice(0,10);
-    }
-
-    function showDashboard(user, profile) {
-      $("startupCard").classList.add("hidden");
-      $("dashCard").classList.remove("hidden");
-
-      $("emailPill").textContent = "Email : " + (user.email ?? "");
-      $("userPill").textContent = "User ID : " + user.id;
-      $("namePill").textContent = "Nom : " + (profile?.full_name ?? "—");
-      setMsg("Prêt.");
-    }
-
-    async function upsertProfile(user) {
-      const fullName = $("fullName").value.trim();
-      const startBalance = parseHours($("startBalance").value);
-      const startDate = $("startDate").value;
-      const contract = $("contract").value;
-
-      if (!fullName) return setStartupMsg("❌ Mets ton Nom / Prénom.");
-      if (startBalance === null) return setStartupMsg("❌ Solde invalide (ex: 20.75).");
-      if (!startDate) return setStartupMsg("❌ Choisis une date.");
-
-      setStartupMsg("Sauvegarde configuration...");
-      const payload = {
-        user_id: user.id,
-        full_name: fullName,
-        start_balance: startBalance,
-        start_date: startDate,
-        contract: contract
-      };
-
-      const { error } = await sb
-        .from(TABLE_PROFILE)
-        .upsert(payload, { onConflict: "user_id" });
-
-      if (error) return setStartupMsg("❌ " + error.message);
-
-      setStartupMsg("✅ Configuration enregistrée.");
-      const prof = await loadProfile(user);
-      showDashboard(user, prof);
-
-      // Bonus: préremplir hours avec le solde départ si aucune ligne hours n’existe
-      try {
-        const { data } = await sb.from(TABLE_HOURS).select("hours").eq("user_id", user.id).maybeSingle();
-        if (!data) $("hours").value = String(startBalance);
-      } catch {}
-    }
-
-    async function loadHours(user) {
-      setMsg("Chargement...");
-      const { data, error } = await sb
-        .from(TABLE_HOURS)
-        .select("hours")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) return setMsg("❌ " + error.message);
-
-      $("hours").value = (data?.hours ?? 0);
-      setMsg("✅ Chargé.");
-    }
-
-    async function saveHours(user) {
-      setMsg("Sauvegarde...");
-      const hours = parseHours($("hours").value);
-      if (hours === null) return setMsg("❌ Heures invalides (ex: 20.75).");
-
-      const { error } = await sb
-        .from(TABLE_HOURS)
-        .upsert({ user_id: user.id, hours }, { onConflict: "user_id" });
-
-      if (error) return setMsg("❌ " + error.message);
-
-      setMsg("✅ Sauvegardé.");
-    }
-
-    // ✅ BOOT
-    (async () => {
-      const user = await ensureSession();
-      if (!user) return;
-
-      $("logoutBtn").addEventListener("click", async () => {
-        await sb.auth.signOut();
-        window.location.href = "./index.html";
-      });
-
-      $("startBtn").addEventListener("click", async () => {
-        const user2 = await ensureSession();
-        if (!user2) return;
-        await upsertProfile(user2);
-      });
-
-      $("loadBtn").addEventListener("click", async () => {
-        const user2 = await ensureSession();
-        if (!user2) return;
-        await loadHours(user2);
-      });
-
-      $("saveBtn").addEventListener("click", async () => {
-        const user2 = await ensureSession();
-        if (!user2) return;
-        await saveHours(user2);
-      });
-
-      // Profil ?
-      try {
-        const prof = await loadProfile(user);
-        if (!prof) showStartup(user);
-        else showDashboard(user, prof);
-      } catch (e) {
-        // Si la table profile n’existe pas → on te le dit clairement
-        showStartup(user);
-        setStartupMsg("⚠️ Table 'timetracker_profile' manquante. Crée-la (SQL ci-dessous), puis recharge.");
-      }
-    })();
-  </script>
-
-  <!-- SQL à exécuter dans Supabase (SQL Editor) si pas déjà fait -->
-  <!--
-  1) Table timetracker (si pas déjà fait)
-  create table if not exists public.timetracker (
-    user_id uuid primary key references auth.users(id) on delete cascade,
-    hours numeric not null default 0
-  );
-  alter table public.timetracker enable row level security;
-  create policy "Users can access their own hours"
-    on public.timetracker
-    for all
-    using (auth.uid() = user_id)
-    with check (auth.uid() = user_id);
-
-  2) Table timetracker_profile (IMPORTANT pour que le bouton “Démarrer” marche)
-  create table if not exists public.timetracker_profile (
-    user_id uuid primary key references auth.users(id) on delete cascade,
-    full_name text not null,
-    start_balance numeric not null default 0,
-    start_date date not null,
-    contract text not null default '39/38',
-    updated_at timestamptz not null default now()
-  );
-  alter table public.timetracker_profile enable row level security;
-  create policy "Users can access their own profile"
-    on public.timetracker_profile
-    for all
-    using (auth.uid() = user_id)
-    with check (auth.uid() = user_id);
-  -->
-</body>
-</html>
+/* =========================
+   BUTTON
+========================= */
+btnStart.addEventListener("click", startupSave);
+</script>
