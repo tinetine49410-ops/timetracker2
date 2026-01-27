@@ -2,107 +2,128 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TimeTracker — Connexion</title>
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="manifest" href="manifest.json" />
   <style>
-    :root{--card:#101b2f;--border:#1f2b44;--txt:#e5e7eb;--muted:#94a3b8;--green:#10b981;--blue:#2563eb;--red:#ef4444}
-    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#000}
-    .wrap{width:100%;max-width:520px;padding:18px}
-    .card{background:rgba(16,27,47,.95);border:1px solid rgba(31,43,68,.9);border-radius:22px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-    h1{margin:0 0 8px;font-size:26px;color:var(--txt)}
-    p{margin:0 0 14px;color:var(--muted);font-size:13px}
-    label{display:block;margin:10px 0 6px;color:var(--muted);font-size:12px}
-    input{width:100%;padding:14px 14px;border-radius:14px;border:1px solid rgba(31,43,68,.9);background:rgba(255,255,255,.06);color:var(--txt);outline:none}
-    .row{display:flex;gap:10px;margin-top:12px}
-    button{flex:1;padding:14px;border:none;border-radius:14px;font-weight:900;cursor:pointer}
-    .b1{background:var(--green);color:#062014}
-    .b2{background:var(--blue);color:#06122a}
-    .msg{margin-top:12px;padding:12px;border-radius:14px;border:1px solid rgba(31,43,68,.9);color:var(--txt);font-size:13px;min-height:44px;display:flex;align-items:center}
-    .ok{border-color:rgba(16,185,129,.45)}
-    .bad{border-color:rgba(239,68,68,.45)}
-    .small{margin-top:10px;font-size:12px;color:var(--muted)}
+    :root {
+      --bg:#05060a; --card:#0b1020cc; --stroke:#1a2a45; --text:#e9eefc;
+      --muted:#a6b3d6; --green:#19c37d; --blue:#3578ff; --red:#ff4b4b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+      background:radial-gradient(1200px 600px at 30% 20%, #0b1633 0%, #05060a 55%, #000 100%);
+      color:var(--text); padding:24px;
+    }
+    .card{width:min(520px,100%); background:var(--card); border:1px solid var(--stroke);
+      border-radius:22px; box-shadow:0 18px 60px rgba(0,0,0,.55); padding:22px 22px 18px;
+      backdrop-filter: blur(10px);
+    }
+    h1{margin:0 0 6px; font-size:26px}
+    p{margin:0 0 16px; color:var(--muted)}
+    label{display:block; font-size:14px; color:var(--muted); margin:12px 0 6px}
+    input{width:100%; padding:14px 14px; border-radius:14px; border:1px solid var(--stroke);
+      background:#0b1225; color:var(--text); outline:none;
+    }
+    .row{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
+    button{flex:1; min-width:200px; cursor:pointer; padding:14px 14px; border-radius:14px;
+      border:0; font-weight:700; letter-spacing:.2px;
+    }
+    .primary{background:var(--green); color:#062012}
+    .secondary{background:var(--blue); color:#06122b}
+    .ghost{background:transparent; border:1px solid var(--stroke); color:var(--text)}
+    .msg{margin-top:14px; padding:12px 12px; border-radius:14px; border:1px solid var(--stroke);
+      background:#0b1225; color:var(--muted); min-height:44px;
+    }
+    .ok{color:#7CFFB2}
+    .err{color:#ff8a8a}
+    .small{margin-top:10px; color:var(--muted); font-size:12px; line-height:1.35}
+    a{color:var(--muted)}
   </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>🔒 Connexion</h1>
-      <p>Connexion e-mail / mot de passe (Supabase).</p>
+  <div class="card">
+    <h1>🔐 Connexion</h1>
+    <p>Connexion par e-mail / mot de passe (Supabase).</p>
 
-      <label>Email</label>
-      <input id="email" type="email" autocomplete="email" />
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="email" placeholder="ex: prenom.nom@exemple.com" />
 
-      <label>Mot de passe</label>
-      <input id="password" type="password" autocomplete="current-password" />
+    <label for="password">Mot de passe</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
 
-      <div class="row">
-        <button id="btnLogin" class="b1">Se connecter</button>
-        <button id="btnSignup" class="b2">Créer un compte</button>
-      </div>
+    <div class="row">
+      <button id="login" class="primary" type="button">Se connecter</button>
+      <button id="signup" class="secondary" type="button">Créer un compte</button>
+    </div>
 
-      <div id="msg" class="msg">Prêt.</div>
-      <div class="small">Après connexion, tu es envoyé vers <b>app.html</b>.</div>
+    <div class="row">
+      <button id="logout" class="ghost" type="button">Se déconnecter</button>
+    </div>
+
+    <div id="msg" class="msg">Prêt.</div>
+    <div class="small">
+      Après connexion, tu es envoyé vers <b>app.html</b>.
+      <br/>Astuce : si tu utilises GitHub Pages, garde <b>index.html</b> comme page d’entrée.
     </div>
   </div>
 
-  <!-- ✅ Supabase UMD (pas module) -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // ✅ Tes infos
+    // --- PWA ---
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+    }
+
     const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
-
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const $ = (id)=>document.getElementById(id);
-    const msgEl = $("msg");
+    const $ = (id) => document.getElementById(id);
+    const msg = (t, ok=false) => {
+      const el = $('msg');
+      el.textContent = t;
+      el.className = 'msg ' + (ok ? 'ok' : '');
+      if (!ok) el.classList.remove('ok');
+    };
+    const err = (t) => {
+      const el = $('msg');
+      el.textContent = t;
+      el.className = 'msg err';
+    };
 
-    function setMsg(text, type=""){
-      msgEl.className = "msg " + (type || "");
-      msgEl.textContent = text;
-    }
-
-    async function init(){
+    async function goIfSession() {
       const { data } = await sb.auth.getSession();
-      if (data && data.session) location.href = "./app.html";
+      if (data?.session) location.href = './app.html';
     }
-    init();
 
-    $("btnLogin").addEventListener("click", async () => {
-      try{
-        const email = $("email").value.trim();
-        const password = $("password").value;
-        if(!email || !password) return setMsg("❌ Renseigne email + mot de passe.", "bad");
-
-        setMsg("Connexion...");
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) return setMsg("❌ " + error.message, "bad");
-
-        setMsg("✅ Connexion réussie.", "ok");
-        location.href = "./app.html";
-      }catch(e){
-        setMsg("❌ " + (e?.message || e), "bad");
-      }
+    $('login').addEventListener('click', async () => {
+      msg('Connexion…');
+      const email = $('email').value.trim();
+      const password = $('password').value;
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) return err('❌ ' + error.message);
+      msg('✅ Connexion réussie', true);
+      location.href = './app.html';
     });
 
-    $("btnSignup").addEventListener("click", async () => {
-      try{
-        const email = $("email").value.trim();
-        const password = $("password").value;
-        if(!email || !password) return setMsg("❌ Renseigne email + mot de passe.", "bad");
-
-        setMsg("Création du compte...");
-        const { error } = await sb.auth.signUp({ email, password });
-        if (error) return setMsg("❌ " + error.message, "bad");
-
-        setMsg("✅ Compte créé. Tu peux te connecter.", "ok");
-      }catch(e){
-        setMsg("❌ " + (e?.message || e), "bad");
-      }
+    $('signup').addEventListener('click', async () => {
+      msg('Création du compte…');
+      const email = $('email').value.trim();
+      const password = $('password').value;
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) return err('❌ ' + error.message);
+      msg('✅ Compte créé. Tu peux te connecter.', true);
     });
+
+    $('logout').addEventListener('click', async () => {
+      await sb.auth.signOut();
+      msg('Déconnecté.', true);
+    });
+
+    goIfSession();
   </script>
 </body>
 </html>
