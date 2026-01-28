@@ -1,65 +1,2378 @@
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+<!doctype html>
+<html lang="fr">
+<head>
 
-/* =========================
-   CONFIG SUPABASE
-========================= */
-const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
-const SUPABASE_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="manifest" href="manifest.json" />
 
-/* =========================
-   ELEMENTS
-========================= */
-const btnStart = document.getElementById("btnStart");
-const msg = document.getElementById("startupMsg");
+  <meta charset="utf-8">
+  <title>TimeTracker</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<style>
+    :root {
+      --bg:#1a2236; --card:#242f4d; --primary:#2563eb;
+      --text-main:#fff; --text-muted:#94a3b8; --border:#334155;
+      --success:#10b981; --warning:#facc15; --danger:#ef4444;
+      --btn-pill:#2e3a59;
+    }
+    *{box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;}
+    body{margin:0;background:var(--bg);color:var(--text-main);display:flex;justify-content:center;padding:15px;min-height:100vh}
+    .container{width:100%;max-width:440px;display:flex;flex-direction:column;gap:12px}
+    .user-badge{text-align:center;font-weight:900;font-size:14px;color:var(--primary);letter-spacing:1px;margin-bottom:-5px}
+    /* La couleur de fond de la carte s'adaptera en JS */
+    .header-card{background:var(--primary);border-radius:40px;padding:25px;text-align:center;box-shadow:0 10px 30px rgba(37,99,235,0.3);transition: background 0.3s ease;}
+    .header-label{display:none;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:5px;opacity:0.9}
+    .solde-val{font-size:54px;font-weight:900;margin:0;line-height:1}
+    .solde-sub{font-size:18px;font-weight:600;opacity:0.8;margin-top:5px}
+    .estim-box{background:rgba(255,255,255,0.15);border-radius:20px;margin-top:15px;padding:10px;border:1px solid rgba(255,255,255,0.2)}
+    .estim-val{font-size:18px;font-weight:800}
+    .date-pill{background:var(--card);border-radius:30px;padding:10px;text-align:center;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border)}
+    .nav-arrow{font-size:24px;cursor:pointer;color:var(--primary);padding:0 10px;font-weight:bold}
+    .date-info{display:flex;flex-direction:column;gap:2px;flex-grow:1}
+    .date-txt{font-size:16px;font-weight:800;text-transform:lowercase}
+    .status-badge{background:#1e293b;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:800;color:var(--primary);display:inline-block}
+    .btn-today{background:var(--btn-pill);border:1px solid var(--border);color:var(--text-main);font-size:9px;padding:3px 8px;border-radius:10px;cursor:pointer;font-weight:bold;margin-top:2px}
+    .btn-reset-link{font-size:10px;color:var(--danger);text-decoration:underline;cursor:pointer;margin-top:6px;font-weight:700;background:none;border:none;opacity:0.8}
+    .btn-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .btn-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .pill{background:var(--btn-pill);border:none;color:#fff;padding:16px;border-radius:40px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border)}
+    .pill-blue{background:var(--primary);border:none}
+    .pill-green{background:var(--success);border:none}
+    .input-row{display:flex;gap:10px;margin-top:2px}
+    .input-manual{flex-grow:1;background:var(--btn-pill);border:1px solid var(--border);border-radius:30px;padding:14px;color:#fff;text-align:center;font-weight:700}
+    .btn-ok{background:var(--primary);border:none;color:white;border-radius:20px;padding:0 20px;font-weight:900;cursor:pointer}
+    .overlay {position:fixed; inset:0; background:rgba(0,0,0,0.95); display:none; flex-direction:column; padding:10px; z-index:10000; overflow-y:auto;}
+    .modal{background:var(--card);border-radius:35px;padding:25px;width:100%;max-width:400px;margin:auto;border:1px solid var(--border);text-align:center}
 
-const fullnameEl = document.getElementById("startup_name");
-const balanceEl = document.getElementById("startup_balance");
-const dateEl = document.getElementById("startup_date");
-const contractEl = document.getElementById("startup_contract");
+    .overlay-card{background:var(--card);border-radius:35px;padding:25px;width:100%;max-width:400px;margin:auto;border:1px solid var(--border)}
+    .overlay-title{text-align:center;font-weight:900;font-size:18px;margin:0 0 6px 0}
+    .preview-box{background:rgba(0,0,0,0.3);padding:12px;border-radius:20px;margin-bottom:15px;font-weight:bold;color:var(--primary);border:1px dashed var(--border)}
+    
+    .bilan-area {background:white; color:black; padding:10px; border-radius:5px; width:100%; position:relative; min-height: 1050px; }
+    .bilan-table {width:100%; border-collapse:collapse; font-size:9px; color:black}
+    .bilan-table th {background:#f1f5f9; padding:6px; text-align:center; border:1px solid #cbd5e1}
+    .bilan-table td {padding:5px; border:1px solid #e2e8f0; text-align:center}
+    .row-weekend {background:#f8fafc}
+    .total-line {background:#e2e8f0; font-weight:bold; font-size:10px}
+    .right {text-align:right}
+  
+.form-row{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.form-row label{font-size:12px;opacity:.85}
+.form-row input{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--txt)}
+.overlay-sub{font-size:12px;opacity:.85;margin-top:4px}
 
-/* =========================
-   SESSION
-========================= */
-const { data: { session } } = await supabase.auth.getSession();
-if (!session) location.href = "index.html";
-const user = session.user;
 
-/* =========================
-   SAVE STARTUP
-========================= */
-async function startupSave() {
-  msg.textContent = "⏳ Sauvegarde…";
+.btn-grid-1{display:grid;grid-template-columns:1fr;gap:10px}
 
-  const payload = {
-    user_id: user.id,
-    fullname: fullnameEl.value.trim(),
-    start_balance: Number(balanceEl.value || 0),
-    start_date: dateEl.value,
-    contract: contractEl.value
-  };
 
-  if (!payload.fullname || !payload.start_date) {
-    msg.textContent = "❌ Champs obligatoires manquants";
-    return;
-  }
+/* === Réglages (tabs) === */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.tab-btn{flex:1;min-width:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--text-main);padding:10px 12px;border-radius:14px;font-weight:800;font-size:12px;cursor:pointer}
+.tab-btn.active{background:var(--primary);border-color:transparent}
+.tab-panel{margin-top:6px}
+.hint{margin-top:10px;font-size:12px;opacity:.85;line-height:1.35}
 
-  const { error } = await supabase
-    .from("timetracker_profile")
-    .upsert(payload, { onConflict: "user_id" });
+.cp-badge{background:rgba(0,0,0,.25);padding:2px 8px;border-radius:999px;font-size:11px;font-weight:900;margin-left:6px;border:1px solid rgba(255,255,255,.18)}
 
-  if (error) {
-    msg.textContent = "❌ " + error.message;
-    return;
-  }
+    /* Réglages - grille frais */
+    .rates-table{width:100%;border-collapse:collapse;font-size:12px;}
+    .rates-table th,.rates-table td{border-bottom:1px solid rgba(255,255,255,0.10);padding:10px 8px;text-align:center;white-space:nowrap;}
+    .rates-table th{text-transform:uppercase;font-size:10px;letter-spacing:.8px;opacity:.85;}
+    .rates-table td:first-child{font-weight:900;text-align:left;}
+    .rates-input{width:92px;max-width:100%;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18);color:#fff;font-weight:800;text-align:center;}
+    .rates-input:focus{outline:none;border-color:rgba(37,99,235,.8);box-shadow:0 0 0 3px rgba(37,99,235,.25);}
+    .rates-row:hover{background:rgba(255,255,255,0.04);}
 
-  msg.textContent = "✅ Configuration enregistrée";
-  setTimeout(() => location.reload(), 600);
+/* === PDF: force 1 page A4 === */
+#pdf-content{
+  width: 210mm !important;
+  min-height: 297mm !important;
+  height: 297mm !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+#pdf-content table{ font-size: 11px !important; }
+#pdf-content th, #pdf-content td{ padding: 4px 6px !important; }
+#pdf-content h1, #pdf-content h2, #pdf-content h3{ margin: 6px 0 !important; }
+
+
+/* PDF: remonter le contenu */
+#pdf-content{ padding-top: 6mm !important; }
+#pdf-content .bilan-table{ margin-top: 0 !important; }
+#pdf-content #bilanTitle{ margin-top: 0 !important; }
+
+
+/* Hide UI buttons in PDF */
+.pdf-export .btn-grid-2,
+.pdf-export button {
+  display: none !important;
 }
 
+
+/* === PDF FINAL: 1 page guaranteed === */
+#pdf-content{
+  width: 210mm !important;
+  padding: 8mm !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+#pdf-content table{ font-size: 10.5px !important; }
+#pdf-content th, #pdf-content td{ padding: 3px 5px !important; }
+#pdfSignatureBlock{
+  position:absolute !important;
+  right:10mm !important;
+  bottom:10mm !important;
+  z-index:9999 !important;
+}
+/* never export UI buttons */
+.pdf-export .btn-grid-2,
+.pdf-export button{
+  display:none !important;
+}
+
+
+/* Export PDF: cacher les boutons UI */
+.pdf-export .btn-grid-2,
+.pdf-export .btn-grid,
+.pdf-export button{ display:none !important; }
+
+
+/* === Startup: rendre le menu Contrat lisible (options) === */
+#startupOverlay select option{
+  color:#111 !important;
+  background:#fff !important;
+}
+#startupOverlay select{
+  color:#fff;
+}
+
+</style>
+</head>
+<body>
+
+<style>
+#ttLogout{position:fixed; top:18px; right:18px; z-index:9999; background:#ff4b4b; color:#fff; border:0;
+  padding:10px 14px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:0 12px 40px rgba(0,0,0,.35);}
+#ttUserEmail{position:fixed; top:22px; right:140px; z-index:9999; color:#a6b3d6; font-size:12px; max-width:45vw;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+</style>
+<button id="ttLogout" type="button">Déconnexion</button>
+<div id="ttUserEmail"></div>
+
+
+<div class="container" id="appContainer" style="display:none;">
+  <div id="userBadge" class="user-badge">UTILISATEUR</div>
+  <div id="headerCard" class="header-card">
+    <div id="headerLabel" class="header-label">SOLDE DÉPART : 0H00</div>
+    <div id="totalH" class="solde-val">--</div>
+    <div id="totalHM" class="solde-sub">--</div>
+    <div class="estim-box">
+      <div class="estim-label">Estimation fin de mois</div>
+      <div id="estimH" class="estim-val">--</div>
+    </div>
+  </div>
+
+  <div class="date-pill">
+    <span class="nav-arrow" onclick="moveDay(-1)">❮</span>
+    <div class="date-info">
+      <div id="dateTxt" class="date-txt">--</div>
+      <div><span id="statusBadge" class="status-badge">--</span></div>
+      <center><button class="btn-today" onclick="goToday()">Aujourd'hui</button></center>
+      <button class="btn-reset-link" onclick="resetDay()">✖ Effacer la saisie</button>
+    </div>
+    <span class="nav-arrow" onclick="moveDay(1)">❯</span>
+  </div>
+
+  <div class="btn-grid-3">
+    <button class="pill pill-blue" onclick="add(0.5)">+ 30 min</button>
+    <button class="pill pill-blue" onclick="add(0.75)">+ 45 min</button>
+    <button class="pill pill-blue" onclick="add(1)">+ 1 Heure</button>
+  </div>
+
+  <div class="input-row">
+    <input type="text" id="manualInput" class="input-manual" placeholder="Ex: 1h30 ou 2">
+    <button class="btn-ok" onclick="processManual()">OK</button>
+  </div>
+
+  <div class="btn-grid-3">
+  <button class="pill" onclick="openChantier()">🏗 Chantier</button>
+  <button class="pill" style="color:#ff6b6b" onclick="signalerAbsence()">✈ Absence</button>
+  <button class="pill" id="btnVac" style="color:#ffd166" onclick="openCPCalendar()">🌴 Congé payé</button>
+</div>
+
+
+  <div class="btn-grid-2">
+    <button class="pill" id="btnPanier" onclick="togglePanier()">🍽 Panier</button>
+    <button class="pill" id="btnVoiture" onclick="toggleVoiture()">🚗 Voiture</button>
+  </div>
+
+  <button class="pill pill-green" style="margin-top:10px" onclick="openSelectionBilan()">📊 BILANS / PDF</button>
+
+
+  <button class="pill" style="background:#0f172a;border:1px solid var(--border)" onclick="openStartupOverlay()">🚀 Configuration initiale</button>
+  <button class="pill" onclick="openSettings()">⚙️ Réglages</button>
+</div>
+
+<div id="selectionBilanOverlay" class="overlay">
+    <div class="modal">
+      <h2 style="margin-top:0">📊 Choisir le Bilan</h2>
+      <button class="pill pill-blue" style="width:100%;margin-bottom:12px" onclick="ouvrirEtFermer('hebdo')">📅 BILAN HEBDOMADAIRE</button>
+      <button class="pill pill-blue" style="width:100%;margin-bottom:20px" onclick="ouvrirEtFermer('mensuel')">🗓️ BILAN MENSUEL</button>
+      <button class="pill" style="width:100%; background:var(--danger)" onclick="closeOverlay('selectionBilanOverlay')">ANNULER</button>
+    </div>
+</div>
+
+<div id="bilanOverlay" class="overlay">
+  <div id="pdf-content" class="bilan-area" style="position:relative;">
+    <h3 id="bilanTitle" style="text-align:center; color:black; margin:0 0 5px 0; font-size:16px">Bilan</h3>
+    <div style="font-size:11px; color:black; margin-bottom:10px; text-align:center; font-weight:bold">NOM : <span id="pdfName">UTILISATEUR</span></div>
+<table class="bilan-table">
+        <tbody id="bilanBody"></tbody>
+    </table>
+  
+  <div id="pdfSignatureBlock" style="display:none; position:absolute; right:10mm; bottom:14mm; text-align:right; margin-top:0; z-index:999;">
+    <div style="font-weight:600">Signature :</div>
+    <img id="pdfSignatureImg" alt="signature" style="display:block; margin-top:6px; max-width:220px; max-height:120px; border:1px solid rgba(0,0,0,.15); border-radius:8px; background:#fff"/>
+    <div style="margin-top:6px; font-size:12px; opacity:.85">
+      Nom : <span id="pdfSigName"></span><br/>
+      Date : <span id="pdfSigDate"></span>
+    </div>
+</div>
+
+</div>
+  <div class="btn-grid-2" style="margin-top:20px; width:100%; max-width:400px; align-self:center">
+    <button class="pill pill-blue" onclick="return generatePDFFlow(event)">📥 PDF (1 PAGE)</button>
+    <button class="pill" style="background:#475569" onclick="closeOverlay('bilanOverlay')">RETOUR</button>
+  </div>
+</div>
+
+<div id="chantierOverlay" class="overlay">
+  <div class="modal">
+    <h2 style="margin-top:0">🏗 Configuration</h2>
+    <button class="pill" style="width:100%;margin-bottom:5px" onclick="promptChantierName()">✏️ Nom du chantier</button>
+    <div id="prevName" class="preview-box">—</div>
+    <button class="pill" style="width:100%;margin-bottom:5px" onclick="promptChantierZone()">🧭 Zone (1A à 7)</button>
+    <div id="prevZone" class="preview-box">—</div>
+    <div class="btn-grid-2">
+      <button id="btnModeTrajet" class="pill" onclick="setMode('trajet')">TRAJET</button>
+      <button id="btnModeTransp" class="pill" onclick="setMode('transport')">TRAJ+TRANSP</button>
+    </div>
+    <button class="pill pill-blue" style="width:100%;margin-top:20px" onclick="closeOverlay('chantierOverlay')">FERMER</button>
+  </div>
+</div>
+
+
+
+<!-- =========================
+     Écran de démarrage (OBLIGATOIRE)
+     Version SIMPLE A : Nom + Solde + Date + Contrat
+     ========================= -->
+<div id="startupOverlay" class="overlay" style="display:flex;">
+  <div class="overlay-card">
+    <h2 class="overlay-title">🚀 Configuration initiale</h2>
+    <div class="overlay-sub">Obligatoire avant d’utiliser l’application.</div>
+
+    <div class="form-row">
+      <label>Nom / Prénom</label>
+      <input id="suName" type="text" placeholder="Ex: DUPONT Julien" />
+    </div>
+
+    <div class="form-row">
+      <label>Solde départ (heures)</label>
+      <input id="suInitial" inputmode="decimal" type="number" step="0.25" placeholder="Ex: 0" />
+    </div>
+
+    <div class="form-row">
+      <label>Date de début du suivi</label>
+      <input id="suStart" type="date" />
+    </div>
+
+    <div class="form-row">
+      <label>Contrat</label>
+      <select id="suPreset" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-weight:800;">
+        <option value="39_38">39h travaillées / 38h payées</option>
+        <option value="39">39h</option>
+        <option value="37_5">37h30</option>
+        <option value="35">35h</option>
+        <option value="moi">Personnalisé</option>
+      </select>
+      <div class="hint" style="margin-top:8px;opacity:.9">
+        Astuce : tu pourras modifier tout ça ensuite dans ⚙️ Réglages.
+      </div>
+    </div>
+
+    <div class="btn-grid-1" style="margin-top:14px;">
+      <button class="pill pill-green" onclick="startupSave()">▶ Démarrer l’application</button>
+    </div>
+  </div>
+</div>
+<!-- ========================= -->
+
+<script>
+var INITIAL_REPORT = 0;
+var START_TRACKING = new Date("2025-12-31T12:00:00");
+var BONUS_START = new Date("2026-01-05T00:00:00"); // début du +1h/semaine automatique
+var STORAGE_KEY = 'tracker_default';
+
+// ==== COLLEGUE V3: nettoyage 1er lancement (évite de reprendre les anciennes heures) ====
+(function(){
+  try{
+    var flag = "TT_COLLEGUE_V3_CLEAN_DONE";
+    if(!sessionStorage.getItem(flag)){
+      // On ne touche PAS aux autres sites/apps, seulement aux anciennes clés TimeTracker connues
+      var prefixes = ["tracker_2026_", "tracker_COLLEGUE_", "tracker_"];
+      var rm = [];
+      for(var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        if(!k) continue;
+        for(var p=0;p<prefixes.length;p++){
+          if(k.indexOf(prefixes[p])===0){ rm.push(k); break; }
+        }
+      }
+      rm.forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+      sessionStorage.setItem(flag, "1");
+    }
+  }catch(e){}
+})();
+// ==== FIN nettoyage 1er lancement ====
+var TRAJET_RATES = {"1A":0.48,"1B":0.67,"2":1.90,"3":4.08,"4":5.12,"5":6.11,"6":6.86,"7":8.17};
+var TRANSPORT_RATES = {"1A":0.88,"1B":1.12,"2":4.37,"3":8.25,"4":12.63,"5":18.81,"6":20.14,"7":24.39};
+var CP_STATE_KEY = STORAGE_KEY + "_cp";var DEFAULT_TRAJET_RATES = JSON.parse(JSON.stringify(TRAJET_RATES));
+var DEFAULT_TRANSPORT_RATES = JSON.parse(JSON.stringify(TRANSPORT_RATES));
+
+var CP_SETTINGS_KEY = STORAGE_KEY + "_cp_settings";
+var PANIER_PRICE = 10.30;
+var WEEKLY_FIXED_OVERTIME = 0;
+var CONTRACTS_KEY = STORAGE_KEY + "_contract_profiles_v1";
+var PENDING_CONTRACT_KEY = STORAGE_KEY + "_pending_contract_v1";
+
+// ✅ Valeurs par défaut (tu peux les changer dans ⚙️ Réglages)
+var CP_RESET_MONTH = 5; // 0=Jan ... 5=Juin
+var CP_RESET_DAY = 1;
+var CP_QUOTA = 0;
+// Valeur actuelle avant le prochain reset (ex: il te reste 4 CP)
+var CP_REMAINING_NOW = 0;
+
+function cpDefaults(){
+  return { resetMonth: CP_RESET_MONTH, resetDay: CP_RESET_DAY, quota: CP_QUOTA, remainingNow: CP_REMAINING_NOW };
+}
+
+function cpApplySettingsToGlobals(sett){
+  CP_RESET_MONTH = Math.max(0, Math.min(11, (sett.resetMonth|0)));
+  CP_RESET_DAY = Math.max(1, Math.min(31, (sett.resetDay|0)));
+  CP_QUOTA = Math.max(0, (sett.quota|0));
+  CP_REMAINING_NOW = Math.max(0, (sett.remainingNow|0));
+}
+
+function cpLoadSettings(){
+  var d = cpDefaults();
+  var st = null;
+  try { st = JSON.parse(localStorage.getItem(CP_SETTINGS_KEY) || "null"); } catch(e) { st = null; }
+  if(!st) st = {};
+  var merged = {
+    resetMonth: (typeof st.resetMonth === "number") ? st.resetMonth : d.resetMonth,
+    resetDay: (typeof st.resetDay === "number") ? st.resetDay : d.resetDay,
+    quota: (typeof st.quota === "number") ? st.quota : d.quota,
+    remainingNow: (typeof st.remainingNow === "number") ? st.remainingNow : d.remainingNow
+  };
+  cpApplySettingsToGlobals(merged);
+  return merged;
+}
+
+function cpSaveSettings(sett){
+  localStorage.setItem(CP_SETTINGS_KEY, JSON.stringify(sett));
+  cpApplySettingsToGlobals(sett);
+}
+
+// charge les réglages au démarrage
+cpLoadSettings();
+
+
+var REAL_TODAY = new Date(); REAL_TODAY.setHours(12,0,0,0);
+var selDate = new Date(REAL_TODAY.getTime());
+var s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"data":{},"extra":{}}');
+
+function toISO(d) { return d.toISOString().split("T")[0]; }
+
+function isFutureDate(d){
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var dd = new Date(d);
+  dd.setHours(0,0,0,0);
+  return dd.getTime() > today.getTime();
+}
+
+function clampToToday(d){
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var dd = new Date(d);
+  dd.setHours(0,0,0,0);
+  if (dd.getTime() > today.getTime()) return new Date(today.getTime());
+  return d;
+}
+
+
+function cpGetNextReset(d){
+  var y = d.getFullYear();
+  var thisReset = new Date(y, CP_RESET_MONTH, CP_RESET_DAY, 0, 0, 0, 0);
+  // Si on est déjà après le reset de l'année, le prochain reset = année suivante
+  if (d.getTime() >= thisReset.getTime()) {
+    return new Date(y + 1, CP_RESET_MONTH, CP_RESET_DAY, 0, 0, 0, 0);
+  }
+  return thisReset;
+}
+
+function cpLoadState(){
+  var st = null;
+  try { st = JSON.parse(localStorage.getItem(CP_STATE_KEY) || "null"); } catch(e) { st = null; }
+
+  // Init (si aucune donnée) -> affiche 4 CP restants comme demandé, jusqu'au prochain 1er juin
+  if(!st || typeof st.remaining !== "number" || !st.nextReset){
+    var nr = cpGetNextReset(new Date());
+    st = { remaining: CP_REMAINING_NOW, nextReset: toISO(nr) };
+    localStorage.setItem(CP_STATE_KEY, JSON.stringify(st));
+  }
+
+  // Reset automatique si on a dépassé la date de reset
+  var today0 = new Date();
+  today0.setHours(0,0,0,0);
+  var nrDate = new Date(st.nextReset + "T00:00:00");
+  if(!isNaN(nrDate.getTime()) && today0.getTime() >= nrDate.getTime()){
+    st.remaining = CP_QUOTA;
+    st.nextReset = toISO(cpGetNextReset(today0));
+    localStorage.setItem(CP_STATE_KEY, JSON.stringify(st));
+  }
+
+  return st;
+}
+
+function cpSaveState(st){
+  localStorage.setItem(CP_STATE_KEY, JSON.stringify(st));
+}
+
+function cpDec(n){
+  var st = cpLoadState();
+  st.remaining = Math.max(0, Math.round((st.remaining - n) * 100) / 100);
+  cpSaveState(st);
+  if(typeof updateCpBadge === "function") updateCpBadge();
+
 /* =========================
-   BUTTON
-========================= */
-btnStart.addEventListener("click", startupSave);
+   Écran de démarrage (SIMPLE A)
+   ========================= */
+var STARTUP_DONE_KEY = STORAGE_KEY + "_startup_done_v_simple_a";
+
+function _su_todayISO(){
+  var t = new Date(); t.setHours(0,0,0,0);
+  return t.toISOString().split("T")[0];
+}
+
+function openStartupOverlay(){
+  var ov = document.getElementById("startupOverlay");
+  if(!ov) return;
+  ov.style.display = "flex";
+
+  try{
+    appSettings = appLoadSettings();
+    (document.getElementById("suName")||{}).value = (appSettings.profile && appSettings.profile.userName) ? appSettings.profile.userName : "UTILISATEUR";
+    (document.getElementById("suInitial")||{}).value = (appSettings.hours && typeof appSettings.hours.initialReport==="number") ? appSettings.hours.initialReport : 0;
+    (document.getElementById("suStart")||{}).value = (appSettings.hours && appSettings.hours.startTrackingISO) ? appSettings.hours.startTrackingISO : _su_todayISO();
+    (document.getElementById("suPreset")||{}).value = (appSettings.hours && appSettings.hours.contractPreset) ? appSettings.hours.contractPreset : "39_38";
+  }catch(e){}
+}
+
+function closeStartupOverlay(){
+  var ov = document.getElementById("startupOverlay");
+  if(ov) ov.style.display = "none";
+}
+
+function startupSave(){
+  try{
+    var name = ((document.getElementById("suName")||{}).value||"").trim();
+    if(!name){ alert("Nom invalide."); return; }
+
+    var initial = parseFloat((((document.getElementById("suInitial")||{}).value)||"0").replace(",","."));
+    if(isNaN(initial)) { alert("Solde départ invalide."); return; }
+
+    var startISO = ((document.getElementById("suStart")||{}).value||"").trim();
+    if(!startISO) { alert("Date de début invalide."); return; }
+
+    var preset = ((document.getElementById("suPreset")||{}).value||"39_38").trim();
+
+    // Sauver settings (minimum)
+    appSettings = appLoadSettings();
+    appSettings.profile.userName = name;
+    appSettings.profile.appTitle = "TimeTracker - " + name;
+    appSettings.hours.initialReport = Math.round(initial*100)/100;
+    appSettings.hours.startTrackingISO = startISO;
+    appSettings.hours.contractPreset = preset;
+
+    // Appliquer le preset choisi
+    try{
+      if(preset !== "moi"){
+        var pdef = _presetDefaults(preset);
+        appSettings.hours.monThu = pdef.monThu;
+        appSettings.hours.fri = pdef.fri;
+        appSettings.hours.weeklyBase = pdef.weeklyBase;
+        appSettings.hours.weeklyFixedOvertime = pdef.weeklyFixedOvertime; // bonus du preset uniquement
+        appSettings.hours.contractLabel = pdef.contractLabel;
+      }else{
+        // personnalisé: valeurs existantes, bonus à 0 par défaut si vide
+        if(typeof appSettings.hours.weeklyFixedOvertime !== "number") appSettings.hours.weeklyFixedOvertime = 0;
+        if(!appSettings.hours.contractLabel) appSettings.hours.contractLabel = "Moi";
+      }
+    }catch(e){}
+
+    appSaveSettings(appSettings);
+    applyAppSettingsToGlobals();
+
+    localStorage.setItem(STARTUP_DONE_KEY, "1");
+
+    closeStartupOverlay();
+    var app = document.getElementById("appContainer");
+    if(app) app.style.display = "flex";
+    alert("Configuration enregistrée ✅");
+    render();
+  }catch(e){
+    alert("Erreur : " + (e && e.message ? e.message : e));
+  }
+}
+/* ========================= */
+/* ===== FORCED CONFIG MODE (SIMPLE A) ===== */
+function forceAppLock(){
+  try{
+    var done = localStorage.getItem(STARTUP_DONE_KEY);
+    var app = document.getElementById("appContainer");
+    if(!done){
+      if(app) app.style.display = "none";
+      openStartupOverlay();
+    }else{
+      if(app) app.style.display = "flex";
+      closeStartupOverlay();
+    }
+  }catch(e){
+    try{ var ov=document.getElementById("startupOverlay"); if(ov) ov.style.display="flex"; }catch(_){}
+  }
+}
+window.addEventListener("load", function(){ forceAppLock(); });
+/* ===== END FORCED CONFIG MODE ===== */
+
+
+
+}
+
+function cpInc(n){
+  var st = cpLoadState();
+  st.remaining = Math.min(CP_QUOTA, Math.round((st.remaining + n) * 100) / 100);
+  cpSaveState(st);
+  if(typeof updateCpBadge === "function") updateCpBadge();
+}
+
+function cpUpdateButton(){
+  var st = cpLoadState();
+  var btn = document.getElementById("btnVac");
+  if(!btn) return;
+  // Petite pastille "compteur"
+  btn.innerHTML = '🌴 Congé payé <span style="margin-left:8px; padding:3px 10px; border-radius:999px; font-weight:900; font-size:12px; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.25);">'+ st.remaining +'</span>';
+}
+
+
+
+/* =========================
+   Réglages généraux (v31)
+   ========================= */
+var APP_SETTINGS_KEY = STORAGE_KEY + "_app_settings_v1";
+
+function appDefaults(){
+  return {
+    profile: {
+      userName: "UTILISATEUR",
+      appTitle: "TimeTracker"
+    },
+    hours: {
+      initialReport: 0,
+      startTrackingISO: (new Date()).toISOString().split("T")[0],
+      monThu: 8,
+      fri: 7,
+      weeklyBase: 7.6,
+      weeklyFixedOvertime: 0,
+      contractLabel: "39h travaillées / 38h payées",
+      contractPreset: "moi",
+      contractEffectiveISO: (new Date()).toISOString().split("T")[0]
+    },
+    rates: {
+      trajet: {"1A":0.48,"1B":0.67,"2":1.90,"3":4.08,"4":5.12,"5":6.11,"6":6.86,"7":8.17},
+      transport: {"1A":0.88,"1B":1.12,"2":4.37,"3":8.25,"4":12.63,"5":18.81,"6":20.14,"7":24.39},
+      panier: 10.30
+    }
+  };
+}
+
+function appLoadSettings(){
+  var d = appDefaults();
+  var st = null;
+  try { st = JSON.parse(localStorage.getItem(APP_SETTINGS_KEY) || "null"); } catch(e) { st = null; }
+  if(!st) st = {};
+
+  // merge simple
+  st.profile = st.profile || {};
+  st.hours = st.hours || {};
+  st.rates = st.rates || {};
+
+  var merged = {
+    profile: {
+      userName: (typeof st.profile.userName === "string" && st.profile.userName.trim()) ? st.profile.userName.trim() : d.profile.userName,
+      appTitle: (typeof st.profile.appTitle === "string" && st.profile.appTitle.trim()) ? st.profile.appTitle.trim() : d.profile.appTitle
+    },
+    hours: {
+      initialReport: (typeof st.hours.initialReport === "number") ? st.hours.initialReport : d.hours.initialReport,
+      startTrackingISO: (typeof st.hours.startTrackingISO === "string" && st.hours.startTrackingISO) ? st.hours.startTrackingISO : d.hours.startTrackingISO,
+      monThu: (typeof st.hours.monThu === "number") ? st.hours.monThu : d.hours.monThu,
+      fri: (typeof st.hours.fri === "number") ? st.hours.fri : d.hours.fri,
+      weeklyBase: (typeof st.hours.weeklyBase === "number") ? st.hours.weeklyBase : d.hours.weeklyBase,
+      weeklyFixedOvertime: (typeof st.hours.weeklyFixedOvertime === "number") ? st.hours.weeklyFixedOvertime : d.hours.weeklyFixedOvertime,
+      contractLabel: (typeof st.hours.contractLabel === "string" && st.hours.contractLabel.trim()) ? st.hours.contractLabel : d.hours.contractLabel,
+      contractPreset: (typeof st.hours.contractPreset === "string") ? st.hours.contractPreset : d.hours.contractPreset,
+      contractEffectiveISO: (typeof st.hours.contractEffectiveISO === "string" && st.hours.contractEffectiveISO) ? st.hours.contractEffectiveISO : d.hours.contractEffectiveISO
+    },
+    rates: {
+      trajet: (typeof st.rates.trajet === "object" && st.rates.trajet) ? st.rates.trajet : d.rates.trajet,
+      transport: (typeof st.rates.transport === "object" && st.rates.transport) ? st.rates.transport : d.rates.transport
+    }
+  };
+
+  localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(merged));
+  return merged;
+}
+
+function appSaveSettings(obj){
+  localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(obj));
+}
+
+var appSettings = appLoadSettings();
+
+function applyAppSettingsToGlobals(){
+  // globals utilisés par le reste du fichier
+  INITIAL_REPORT = Number(appSettings.hours.initialReport) || 0;
+  START_TRACKING = new Date((appSettings.hours.startTrackingISO || "2026-01-05") + "T12:00:00");
+  WEEKLY_FIXED_OVERTIME = Number(appSettings.hours.weeklyFixedOvertime) || 0;
+
+  TRAJET_RATES = appSettings.rates.trajet || TRAJET_RATES;
+  TRANSPORT_RATES = appSettings.rates.transport || TRANSPORT_RATES;
+  PANIER_PRICE = Number(appSettings.rates.panier) || PANIER_PRICE;
+
+  // UI
+  var ub = document.getElementById("userBadge");
+  if(ub) ub.textContent = appSettings.profile.userName || "—";
+
+  var pn = document.getElementById("pdfName");
+  if(pn) pn.textContent = appSettings.profile.userName || "—";
+
+  if(appSettings.profile.appTitle) document.title = appSettings.profile.appTitle;
+
+  var hl = document.getElementById("headerLabel");
+  if(hl){
+    // texte “propre” comme dans ton style actuel
+    var rep = (Math.round(INITIAL_REPORT*100)/100).toFixed(2).replace(".",",");
+    var pend = null; try{ pend = _loadPendingContract(); }catch(e){ pend = null; }
+    if(pend && pend.effectiveISO){
+      hl.textContent = "CONTRAT : " + (appSettings.hours.contractLabel || "—") + " (changement le " + (new Date(pend.effectiveISO+"T00:00:00")).toLocaleDateString('fr-FR') + ") • SOLDE DÉPART : " + rep + "H";
+    } else {
+      hl.textContent = "CONTRAT : " + (appSettings.hours.contractLabel || "—") + " • SOLDE DÉPART : " + rep + "H";
+    }
+  }
+}
+
+applyAppSettingsToGlobals();
+
+function updateCpBadge(){
+  var st = cpLoadState();
+  var btn = document.getElementById("btnVac");
+  if(btn){
+    btn.innerHTML = "🌴 Congé payé <span class='cp-badge'>" + st.remaining + "</span>";
+  }
+}
+updateCpBadge();
+
+/* Tabs réglages */
+function switchSettingsTab(ev, tabId){
+  try{
+    document.querySelectorAll("#settingsOverlay .tab-btn").forEach(function(b){ b.classList.remove("active"); });
+    document.querySelectorAll("#settingsOverlay .tab-panel").forEach(function(p){ p.style.display = "none"; });
+    var btn = ev && ev.currentTarget ? ev.currentTarget : null;
+    if(btn) btn.classList.add("active");
+    var panel = document.getElementById(tabId);
+    if(panel) panel.style.display = "block";
+    if(tabId==="tabFrais"){ try{ renderRatesTable(); }catch(e){} }
+
+  }catch(e){}
+}
+
+/* Ouvre / remplit les réglages */
+function openSettings(){
+  // 1) appliquer reset CP si besoin
+  var st = cpLoadState();
+  var sett = cpLoadSettings();
+
+  // Profil
+  var n = document.getElementById("setUserName");
+  var t = document.getElementById("setAppTitle");
+  if(n) n.value = appSettings.profile.userName || "";
+  if(t) t.value = appSettings.profile.appTitle || "";
+
+  // Heures
+  var ir = document.getElementById("setInitialReport");
+  var sd = document.getElementById("setStartTracking");
+  var mh = document.getElementById("setHoursMonThu");
+  var fr = document.getElementById("setHoursFri");
+  var wb = document.getElementById("setWeeklyBase");
+  if(ir) ir.value = appSettings.hours.initialReport;
+  if(sd) sd.value = appSettings.hours.startTrackingISO;
+  if(mh) mh.value = appSettings.hours.monThu;
+  if(fr) fr.value = appSettings.hours.fri;
+  if(wb) wb.value = appSettings.hours.weeklyBase;
+  var wfo = document.getElementById("setWeeklyFixedOvertime");
+  if(wfo) wfo.value = appSettings.hours.weeklyFixedOvertime;
+  var cl = document.getElementById("setContractLabel");
+  if(cl) cl.value = appSettings.hours.contractLabel || "";
+  var cpn = document.getElementById("contractProfileName");
+  if(cpn && !cpn.value) cpn.value = (appSettings.hours.contractLabel || "Moi");
+  var cp = document.getElementById("setContractPreset");
+  if(cp){
+    cp.value = appSettings.hours.contractPreset || "39_38";
+    cp.onchange = function(){ loadSelectedContractIntoFields(); };
+  }
+  try{ loadSelectedContractIntoFields(); }catch(e){}
+  var ce = document.getElementById("setContractEffective");
+  var pend = null; try{ pend = _loadPendingContract(); }catch(e){ pend = null; }
+  if(ce) ce.value = (pend && pend.effectiveISO) ? pend.effectiveISO : (appSettings.hours.contractEffectiveISO || (new Date()).toISOString().split("T")[0]);
+
+  // CP
+  var rem = document.getElementById("setCpRemaining");
+  var q = document.getElementById("setCpQuota");
+  var d = document.getElementById("setCpResetDay");
+  var m = document.getElementById("setCpResetMonth");
+  if(rem) rem.value = st.remaining;
+  if(q) q.value = sett.quota;
+  if(d) d.value = sett.resetDay;
+  if(m) m.value = (sett.resetMonth + 1);
+
+  var info = document.getElementById("cpNextResetInfo");
+  if(info){
+    var nr = new Date(st.nextReset + "T00:00:00");
+    var nice = isNaN(nr.getTime()) ? "-" : nr.toLocaleDateString("fr-FR");
+    info.innerHTML = "Prochain reset : <b>" + nice + "</b>";
+  }
+
+  // Frais : rien à faire, l’utilisateur choisit une zone puis charger
+  var pp = document.getElementById("setPanierPrice");
+  if(pp) pp.value = appSettings.rates.panier;
+
+  var rz = document.getElementById("rateZone");
+  if(rz) rz.value = "";
+
+  // tab défaut
+  try{
+    document.querySelectorAll("#settingsOverlay .tab-btn").forEach(function(b){ b.classList.remove("active"); });
+    var first = document.querySelector('#settingsOverlay .tab-btn[data-tab="tabProfil"]');
+    if(first){ first.classList.add("active"); }
+    document.querySelectorAll("#settingsOverlay .tab-panel").forEach(function(p){ p.style.display = "none"; });
+    var p0 = document.getElementById("tabProfil"); if(p0) p0.style.display="block";
+  }catch(e){}
+
+  try{ refreshContractProfilesUI(); }catch(e){}
+  openOverlay("settingsOverlay");
+}
+
+
+/* =========================
+   Profils de contrat (multi-entreprises)
+   ========================= */
+
+function _loadPendingContract(){
+  var p = null;
+  try{ p = JSON.parse(localStorage.getItem(PENDING_CONTRACT_KEY) || "null"); }catch(e){ p = null; }
+  if(!p || !p.effectiveISO || !p.contract) return null;
+  return p;
+}
+function _savePendingContract(effectiveISO, contractObj){
+  localStorage.setItem(PENDING_CONTRACT_KEY, JSON.stringify({effectiveISO: effectiveISO, contract: contractObj}));
+}
+function _clearPendingContract(){
+  localStorage.removeItem(PENDING_CONTRACT_KEY);
+}
+function _todayISO(){
+  var t = new Date(); t.setHours(0,0,0,0);
+  return t.toISOString().split("T")[0];
+}
+function _isISOAfterToday(iso){
+  try{
+    var t = new Date(_todayISO()+"T00:00:00");
+    var d = new Date(iso+"T00:00:00");
+    if(isNaN(d.getTime())) return false;
+    return d.getTime() > t.getTime();
+  }catch(e){ return false; }
+}
+function contractForDate(d){
+  var p = _loadPendingContract();
+  if(!p) return {
+    monThu: appSettings.hours.monThu,
+    fri: appSettings.hours.fri,
+    weeklyBase: appSettings.hours.weeklyBase,
+    weeklyFixedOvertime: appSettings.hours.weeklyFixedOvertime,
+    contractLabel: appSettings.hours.contractLabel
+  };
+  var eff = new Date(p.effectiveISO + "T00:00:00");
+  var dd = new Date(d); dd.setHours(0,0,0,0);
+  if(!isNaN(eff.getTime()) && dd.getTime() >= eff.getTime()){
+    return p.contract;
+  }
+  return {
+    monThu: appSettings.hours.monThu,
+    fri: appSettings.hours.fri,
+    weeklyBase: appSettings.hours.weeklyBase,
+    weeklyFixedOvertime: appSettings.hours.weeklyFixedOvertime,
+    contractLabel: appSettings.hours.contractLabel
+  };
+}
+
+function _loadContractProfiles(){
+  var list = [];
+  try{ list = JSON.parse(localStorage.getItem(CONTRACTS_KEY) || "[]"); }catch(e){ list = []; }
+  if(!Array.isArray(list)) list = [];
+  return list;
+}
+function _saveContractProfiles(list){
+  localStorage.setItem(CONTRACTS_KEY, JSON.stringify(list || []));
+}
+function refreshContractProfilesUI(){
+  var sel = document.getElementById("contractProfileSelect");
+  if(!sel) return;
+  var list = _loadContractProfiles();
+  // reset
+  sel.innerHTML = '<option value="">— Aucun —</option>';
+  for(var i=0;i<list.length;i++){
+    var p = list[i];
+    var opt = document.createElement("option");
+    opt.value = p && p.id ? p.id : ("p"+i);
+    opt.textContent = (p && p.name) ? p.name : ("Contrat " + (i+1));
+    sel.appendChild(opt);
+  }
+}
+
+function _currentContractSnapshot(){
+  return {
+    id: "c_" + Date.now(),
+    name: ((document.getElementById("contractProfileName")||{}).value||"").trim() || "Mon contrat (pour les calculs)",
+    // valeurs prises depuis les champs réglages (les plus fiables)
+    monThu: parseFloat(((document.getElementById("setHoursMonThu")||{}).value||"0").replace(",",".")) || 0,
+    fri: parseFloat(((document.getElementById("setHoursFri")||{}).value||"0").replace(",",".")) || 0,
+    weeklyBase: parseFloat(((document.getElementById("setWeeklyBase")||{}).value||"0").replace(",",".")) || 0,
+    weeklyFixedOvertime: parseFloat(((document.getElementById("setWeeklyFixedOvertime")||{}).value||"0").replace(",",".")) || 0,
+    contractLabel: ((document.getElementById("setContractLabel")||{}).value||"").trim() || "Moi",
+    contractPreset: ((document.getElementById("setContractPreset")||{}).value||"moi")
+  };
+}
+
+function saveContractProfile(){
+  var snap = _currentContractSnapshot();
+  if(!snap.name){ alert("Donne un nom au contrat."); return; }
+  var list = _loadContractProfiles();
+  // si un profil est sélectionné, on écrase celui-là
+  var sel = document.getElementById("contractProfileSelect");
+  var selectedId = sel ? (sel.value||"") : "";
+  if(selectedId){
+    for(var i=0;i<list.length;i++){
+      if(list[i] && list[i].id === selectedId){
+        snap.id = selectedId;
+        list[i] = snap;
+        _saveContractProfiles(list);
+        refreshContractProfilesUI();
+        if(sel) sel.value = selectedId;
+        alert("Contrat mis à jour ✅");
+        return;
+      }
+    }
+  }
+  // sinon on ajoute
+  list.push(snap);
+  _saveContractProfiles(list);
+  refreshContractProfilesUI();
+  if(sel) sel.value = snap.id;
+  alert("Contrat enregistré ✅");
+}
+
+function loadContractProfile(){
+  var sel = document.getElementById("contractProfileSelect");
+  if(!sel || !sel.value){ alert("Choisis un contrat à charger."); return; }
+  var list = _loadContractProfiles();
+  var p = null;
+  for(var i=0;i<list.length;i++){
+    if(list[i] && list[i].id === sel.value){ p = list[i]; break; }
+  }
+  if(!p){ alert("Contrat introuvable."); return; }
+
+  // Remplir les champs
+  var mh = document.getElementById("setHoursMonThu");
+  var fr = document.getElementById("setHoursFri");
+  var wb = document.getElementById("setWeeklyBase");
+  var wfo = document.getElementById("setWeeklyFixedOvertime");
+  var cl = document.getElementById("setContractLabel");
+  var cp = document.getElementById("setContractPreset");
+  var nm = document.getElementById("contractProfileName");
+
+  if(mh) mh.value = p.monThu;
+  if(fr) fr.value = p.fri;
+  if(wb) wb.value = p.weeklyBase;
+  if(wfo) wfo.value = p.weeklyFixedOvertime;
+  if(cl) cl.value = p.contractLabel || "Moi";
+  if(cp) cp.value = "moi"; // charger un profil => mode perso (pour ne pas écraser)
+  if(nm) nm.value = p.name || "";
+
+  alert("Contrat chargé ✅\nPense à cliquer sur “✅ Enregistrer” pour l’appliquer.");
+}
+
+function deleteContractProfile(){
+  var sel = document.getElementById("contractProfileSelect");
+  if(!sel || !sel.value){ alert("Choisis un contrat à supprimer."); return; }
+  if(!confirm("Supprimer ce contrat ?")) return;
+  var list = _loadContractProfiles();
+  list = list.filter(function(x){ return x && x.id !== sel.value; });
+  _saveContractProfiles(list);
+  refreshContractProfilesUI();
+  alert("Contrat supprimé ✅");
+}
+
+
+/* === v75: réglages par contrat (comme v56) ===
+   Chaque contrat (35 / 37h30 / 39 / 39-38) a ses propres valeurs heures/base/HS/label.
+*/
+function _ensureCustomContracts(){
+  if(!appSettings.hours) appSettings.hours = {};
+  if(!appSettings.hours.customContracts) appSettings.hours.customContracts = {};
+}
+function _presetDefaults(preset){
+  if(preset === "35") return {monThu:7,fri:7,weeklyBase:7,weeklyFixedOvertime:0,contractLabel:"35h"};
+  if(preset === "37_5") return {monThu:7.5,fri:7.5,weeklyBase:7.5,weeklyFixedOvertime:0,contractLabel:"37h30"};
+  if(preset === "39") return {monThu:8,fri:8,weeklyBase:7.6,weeklyFixedOvertime:0,contractLabel:"39h"};
+  return {monThu:8,fri:7,weeklyBase:7.6,weeklyFixedOvertime:1,contractLabel:"39h travaillées / 38h payées"}; // 39_38
+}
+function _applyObjToFields(obj){
+  var mh=document.getElementById("setHoursMonThu");
+  var fr=document.getElementById("setHoursFri");
+  var wb=document.getElementById("setWeeklyBase");
+  var wfo=document.getElementById("setWeeklyFixedOvertime");
+  var cl=document.getElementById("setContractLabel");
+  if(mh && obj.monThu!=null) mh.value=obj.monThu;
+  if(fr && obj.fri!=null) fr.value=obj.fri;
+  if(wb && obj.weeklyBase!=null) wb.value=obj.weeklyBase;
+  if(wfo && obj.weeklyFixedOvertime!=null) wfo.value=obj.weeklyFixedOvertime;
+  if(cl && obj.contractLabel!=null) cl.value=obj.contractLabel;
+}
+function loadSelectedContractIntoFields(){
+  var cp=document.getElementById("setContractPreset");
+  if(!cp) return;
+  var preset=cp.value||"39_38";
+  _ensureCustomContracts();
+  var obj = appSettings.hours.customContracts[preset] || _presetDefaults(preset);
+  _applyObjToFields(obj);
+
+  // appliquer au moteur de calcul immédiatement
+  appSettings.hours.contractPreset = preset;
+  appSettings.hours.monThu = obj.monThu;
+  appSettings.hours.fri = obj.fri;
+  appSettings.hours.weeklyBase = obj.weeklyBase;
+  appSettings.hours.weeklyFixedOvertime = obj.weeklyFixedOvertime;
+  appSettings.hours.contractLabel = obj.contractLabel;
+  appSaveSettings(appSettings);
+}
+
+function saveSettings(){
+  
+  if(!window.confirm("Confirmer l’enregistrement des réglages ?")) return;
+// --- Profil
+  var userName = (document.getElementById("setUserName")||{}).value || "";
+  var appTitle = (document.getElementById("setAppTitle")||{}).value || "";
+
+  // --- Heures
+  var initialReport = parseFloat(((document.getElementById("setInitialReport")||{}).value||"0").replace(",","."));
+  var startISO = (document.getElementById("setStartTracking")||{}).value || "";
+  var monThu = parseFloat(((document.getElementById("setHoursMonThu")||{}).value||"0").replace(",","."));
+  var fri = parseFloat(((document.getElementById("setHoursFri")||{}).value||"0").replace(",","."));
+  var weeklyBase = parseFloat(((document.getElementById("setWeeklyBase")||{}).value||"0").replace(",","."));
+
+  if(!userName.trim()){ alert("Nom affiché invalide."); return; }
+  if(isNaN(initialReport)){ alert("Solde saisi invalide."); return; }
+  if(!startISO){ alert("Date de début invalide."); return; }
+  if(isNaN(monThu) || monThu < 0){ alert("Heures Lun-Jeu invalides."); return; }
+  if(isNaN(fri) || fri < 0){ alert("Heures vendredi invalides."); return; }
+  if(isNaN(weeklyBase) || weeklyBase <= 0){ alert("Base (ex: 7.6) invalide."); return; }
+
+  // --- CP (réutilise la logique existante)
+  var rem = parseInt((document.getElementById("setCpRemaining")||{}).value, 10);
+  var quota = parseInt((document.getElementById("setCpQuota")||{}).value, 10);
+  var day = parseInt((document.getElementById("setCpResetDay")||{}).value, 10);
+  var month = parseInt((document.getElementById("setCpResetMonth")||{}).value, 10);
+
+  if(isNaN(rem) || rem < 0){ alert("CP restants invalides."); return; }
+  if(isNaN(quota) || quota < 0){ alert("Quota CP invalide."); return; }
+  if(isNaN(day) || day < 1 || day > 31){ alert("Jour de reset invalide (1-31)."); return; }
+  if(isNaN(month) || month < 1 || month > 12){ alert("Mois de reset invalide (1-12)."); return; }
+
+  
+  // --- Date d'effet : si future, on programme le nouveau contrat sans toucher au passé
+  var todayISO = _todayISO();
+  var isFutureEff = false;
+  try{
+    var t0 = new Date(todayISO+"T00:00:00");
+    var e0 = new Date(effISO+"T00:00:00");
+    isFutureEff = (!isNaN(e0.getTime()) && e0.getTime() > t0.getTime());
+  }catch(e){ isFutureEff = false; }
+
+  if(isFutureEff){
+    // Construire le contrat "nouveau" à partir des valeurs actuellement dans appSettings.hours (qui viennent d'être mises à jour par le preset ou par les champs)
+    var newContract = {
+      monThu: appSettings.hours.monThu,
+      fri: appSettings.hours.fri,
+      weeklyBase: appSettings.hours.weeklyBase,
+      weeklyFixedOvertime: appSettings.hours.weeklyFixedOvertime,
+      contractLabel: appSettings.hours.contractLabel
+    };
+    _savePendingContract(effISO, newContract);
+
+    // Revenir au contrat actuel (pour que les calculs d'aujourd'hui ne changent pas)
+    appSettings.hours.monThu = currentSnapshot.monThu;
+    appSettings.hours.fri = currentSnapshot.fri;
+    appSettings.hours.weeklyBase = currentSnapshot.weeklyBase;
+    appSettings.hours.weeklyFixedOvertime = currentSnapshot.weeklyFixedOvertime;
+    appSettings.hours.contractLabel = currentSnapshot.contractLabel;
+
+    // Mémoriser la date d'effet dans les réglages
+    appSettings.hours.contractEffectiveISO = effISO;
+  }else{
+    // Effet immédiat : on efface tout contrat planifié
+    _clearPendingContract();
+    appSettings.hours.contractEffectiveISO = effISO;
+  }
+
+// 1) Sauver app settings
+  appSettings.profile.userName = userName.trim();
+  appSettings.profile.appTitle = appTitle.trim() || ("TimeTracker - " + userName.trim());
+  appSettings.hours.initialReport = Math.round(initialReport*100)/100;
+  appSettings.hours.startTrackingISO = startISO;
+  appSettings.hours.monThu = monThu;
+  appSettings.hours.fri = fri;
+  appSettings.hours.weeklyBase = weeklyBase;
+  var wfo = parseFloat(((document.getElementById("setWeeklyFixedOvertime")||{}).value||"0").replace(",","."));
+  if(isNaN(wfo)) { alert("Heures sup fixes invalides"); return; }
+  appSettings.hours.weeklyFixedOvertime = wfo;
+  var cl = (document.getElementById("setContractLabel")||{}).value || "";
+  appSettings.hours.contractLabel = cl.trim();
+  var cp = (document.getElementById("setContractPreset")||{}).value || "39_38";
+  var effISO = ((document.getElementById("setContractEffective")||{}).value||"").trim() || _todayISO();
+  appSettings.hours.contractPreset = cp;
+  // v75: sauver ces valeurs pour CE contrat
+  try{
+    _ensureCustomContracts();
+    appSettings.hours.customContracts[cp] = {
+      monThu: appSettings.hours.monThu,
+      fri: appSettings.hours.fri,
+      weeklyBase: appSettings.hours.weeklyBase,
+      weeklyFixedOvertime: appSettings.hours.weeklyFixedOvertime,
+      contractLabel: appSettings.hours.contractLabel
+    };
+  }catch(e){}
+
+
+  var currentSnapshot = {
+    monThu: appSettings.hours.monThu,
+    fri: appSettings.hours.fri,
+    weeklyBase: appSettings.hours.weeklyBase,
+    weeklyFixedOvertime: appSettings.hours.weeklyFixedOvertime,
+    contractLabel: appSettings.hours.contractLabel
+  };
+
+  // Appliquer automatiquement les règles du contrat
+  if(cp === "39_38"){
+    appSettings.hours.monThu = 8;
+    appSettings.hours.fri = 7;
+    appSettings.hours.weeklyBase = 7.6;
+    appSettings.hours.weeklyFixedOvertime = 1;
+    appSettings.hours.contractLabel = "39h travaillées / 38h payées";
+  }
+  if(cp === "39"){
+    appSettings.hours.monThu = 8;
+    appSettings.hours.fri = 8;
+    appSettings.hours.weeklyBase = 7.6;
+    appSettings.hours.weeklyFixedOvertime = 0;
+    appSettings.hours.contractLabel = "39h";
+  }
+  if(cp === "37_5"){
+    appSettings.hours.monThu = 7.5;
+    appSettings.hours.fri = 7.5;
+    appSettings.hours.weeklyBase = 7.5;
+    appSettings.hours.weeklyFixedOvertime = 0;
+    appSettings.hours.contractLabel = "37h30";
+  }
+  if(cp === "35"){
+    appSettings.hours.monThu = 7;
+    appSettings.hours.fri = 7;
+    appSettings.hours.weeklyBase = 7;
+    appSettings.hours.weeklyFixedOvertime = 0;
+    appSettings.hours.contractLabel = "35h";
+  }
+  if(cp === "moi"){
+    // Contrat personnalisé : on NE touche PAS aux valeurs manuelles
+    appSettings.hours.contractLabel = "Moi";
+  }
+
+  if(cp === "37_5"){
+    appSettings.hours.monThu = 7;
+    appSettings.hours.fri = 7;
+    appSettings.hours.weeklyBase = 7;
+    appSettings.hours.weeklyFixedOvertime = 0;
+    appSettings.hours.contractLabel = "35h";
+  }
+
+  var panier = parseFloat(((document.getElementById("setPanierPrice")||{}).value||"0").replace(",","."));
+  if(isNaN(panier) || panier < 0){ alert("Prix du panier invalide."); return; }
+  appSettings.rates.panier = Math.round(panier*100)/100;
+  appSaveSettings(appSettings);
+  applyAppSettingsToGlobals();
+
+  // 2) Sauver CP settings + état restant
+  var newSett = { resetMonth: month-1, resetDay: day, quota: quota, remainingNow: rem };
+  cpSaveSettings(newSett);
+  var st = cpLoadState();
+  st.remaining = rem;
+  cpSaveState(st);
+  updateCpBadge();
+
+  closeOverlay("settingsOverlay");
+  alert("Réglages enregistrés ✅");
+  render();
+}
+
+
+/* === Frais: tableau complet (réglages) === */
+function _ratesZonesOrder(){
+  return ["1A","1B","2","3","4","5","6","7"];
+}
+function renderRatesTable(){
+  var wrap = document.getElementById("ratesTableWrap");
+  if(!wrap) return;
+
+  var zones = _ratesZonesOrder();
+  var html = '<table class="rates-table"><thead><tr><th>Zone</th><th>Trajet (€)</th><th>Transport (€)</th></tr></thead><tbody>';
+  zones.forEach(function(z){
+    var tj = (TRAJET_RATES[z] != null) ? TRAJET_RATES[z] : 0;
+    var tp = (TRANSPORT_RATES[z] != null) ? TRANSPORT_RATES[z] : 0;
+    html += '<tr class="rates-row">'+
+              '<td>'+z+'</td>'+
+              '<td><input class="rates-input" inputmode="decimal" type="number" step="0.01" id="rate_tj_'+z+'" value="'+Number(tj).toFixed(2)+'"></td>'+
+              '<td><input class="rates-input" inputmode="decimal" type="number" step="0.01" id="rate_tp_'+z+'" value="'+Number(tp).toFixed(2)+'"></td>'+
+            '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function saveRatesTable(){
+  var zones = _ratesZonesOrder();
+  if(!appSettings.rates) appSettings.rates = {};
+  appSettings.rates.trajet = appSettings.rates.trajet || {};
+  appSettings.rates.transport = appSettings.rates.transport || {};
+
+  for(var i=0;i<zones.length;i++){
+    var z = zones[i];
+    var a = document.getElementById("rate_tj_"+z);
+    var b = document.getElementById("rate_tp_"+z);
+    var tj = parseFloat(((a&&a.value)||"0").replace(",","."));
+    var tp = parseFloat(((b&&b.value)||"0").replace(",","."));
+    if(isNaN(tj) || tj < 0){ alert("Valeur trajet invalide pour la zone " + z); return; }
+    if(isNaN(tp) || tp < 0){ alert("Valeur transport invalide pour la zone " + z); return; }
+    appSettings.rates.trajet[z] = Math.round(tj*100)/100;
+    appSettings.rates.transport[z] = Math.round(tp*100)/100;
+  }
+
+  var panier = parseFloat(((document.getElementById("setPanierPrice")||{}).value||"0").replace(",","."));
+  if(isNaN(panier) || panier < 0){ alert("Prix du panier invalide."); return; }
+  appSettings.rates.panier = Math.round(panier*100)/100;
+  appSaveSettings(appSettings);
+  applyAppSettingsToGlobals();
+  alert("Grille des frais enregistrée ✅");
+  render();
+}
+
+function resetRatesDefaults(){
+  if(!confirm("Restaurer la grille d’origine pour toutes les zones ?")) return;
+
+  if(!appSettings.rates) appSettings.rates = {};
+  appSettings.rates.trajet = JSON.parse(JSON.stringify(DEFAULT_TRAJET_RATES));
+  appSettings.rates.transport = JSON.parse(JSON.stringify(DEFAULT_TRANSPORT_RATES));
+
+  var panier = parseFloat(((document.getElementById("setPanierPrice")||{}).value||"0").replace(",","."));
+  if(isNaN(panier) || panier < 0){ alert("Prix du panier invalide."); return; }
+  appSettings.rates.panier = Math.round(panier*100)/100;
+  appSaveSettings(appSettings);
+  applyAppSettingsToGlobals();
+  renderRatesTable();
+  alert("Grille d’origine restaurée ✅");
+  render();
+}
+
+/* === Frais: modifier une zone === */
+function prefillRateFromZone(){
+  var z = ((document.getElementById("rateZone")||{}).value||"").trim().toUpperCase();
+  if(!z){ alert("Choisis une zone."); return; }
+  var tj = (TRAJET_RATES[z] != null) ? TRAJET_RATES[z] : "";
+  var tp = (TRANSPORT_RATES[z] != null) ? TRANSPORT_RATES[z] : "";
+  var a = document.getElementById("rateTrajet");
+  var b = document.getElementById("rateTransport");
+  if(a) a.value = tj;
+  if(b) b.value = tp;
+}
+
+function saveRateForZone(){
+  var z = ((document.getElementById("rateZone")||{}).value||"").trim().toUpperCase();
+  if(!z){ alert("Zone invalide."); return; }
+  var tj = parseFloat(((document.getElementById("rateTrajet")||{}).value||"0").replace(",","."));
+  var tp = parseFloat(((document.getElementById("rateTransport")||{}).value||"0").replace(",","."));
+  if(isNaN(tj) || tj < 0){ alert("Trajet invalide."); return; }
+  if(isNaN(tp) || tp < 0){ alert("Transport invalide."); return; }
+
+  // Sauver dans settings
+  if(!appSettings.rates) appSettings.rates = {};
+  if(!appSettings.rates.trajet) appSettings.rates.trajet = {};
+  if(!appSettings.rates.transport) appSettings.rates.transport = {};
+  appSettings.rates.trajet[z] = Math.round(tj*100)/100;
+  appSettings.rates.transport[z] = Math.round(tp*100)/100;
+  var panier = parseFloat(((document.getElementById("setPanierPrice")||{}).value||"0").replace(",","."));
+  if(isNaN(panier) || panier < 0){ alert("Prix du panier invalide."); return; }
+  appSettings.rates.panier = Math.round(panier*100)/100;
+  appSaveSettings(appSettings);
+  applyAppSettingsToGlobals();
+
+  alert("Zone " + z + " mise à jour ✅");
+  render();
+}
+
+/* === CP: reset/recalcul === */
+function forceCpReset(){
+  if(!confirm("Forcer le reset CP maintenant ? (remet à " + CP_QUOTA + ")")) return;
+  var st = cpLoadState();
+  st.remaining = CP_QUOTA;
+  st.nextReset = toISO(cpGetNextReset(new Date()));
+  cpSaveState(st);
+  updateCpBadge();
+  alert("CP remis à " + st.remaining + " ✅");
+}
+
+function recomputeCpFromData(){
+  // compte les jours “vacances” sur toute la période
+  var count = 0;
+  for (var k in s.extra){
+    if(!s.extra.hasOwnProperty(k)) continue;
+    if(s.extra[k] && s.extra[k].vacances) count++;
+  }
+  var st = cpLoadState();
+  var used = count;
+  st.remaining = Math.max(0, CP_QUOTA - used);
+  cpSaveState(st);
+  updateCpBadge();
+  alert("Recalcul terminé ✅\nJours CP trouvés : " + used + "\nCP restants : " + st.remaining);
+}
+
+/* === Export / Import === */
+function exportAllData(){
+  var payload = {
+    version: "v31",
+    when: new Date().toISOString(),
+    storageKey: STORAGE_KEY,
+    tracker: s,
+    appSettings: appSettings,
+    cpSettings: cpLoadSettings(),
+    cpState: cpLoadState()
+  };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "timetracker_backup.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 800);
+}
+
+function importAllData(ev){
+  var file = ev && ev.target && ev.target.files ? ev.target.files[0] : null;
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    try{
+      var payload = JSON.parse(reader.result);
+      if(payload && payload.tracker){
+        s = payload.tracker;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+      }
+      if(payload && payload.appSettings){
+        appSettings = payload.appSettings;
+        var panier = parseFloat(((document.getElementById("setPanierPrice")||{}).value||"0").replace(",","."));
+  if(isNaN(panier) || panier < 0){ alert("Prix du panier invalide."); return; }
+  appSettings.rates.panier = Math.round(panier*100)/100;
+  appSaveSettings(appSettings);
+      }
+      if(payload && payload.cpSettings){
+        cpSaveSettings(payload.cpSettings);
+      }
+      if(payload && payload.cpState){
+        cpSaveState(payload.cpState);
+      }
+      // reload
+      appSettings = appLoadSettings();
+      applyAppSettingsToGlobals();
+      updateCpBadge();
+      alert("Import terminé ✅");
+      render();
+    }catch(e){
+      alert("Import impossible : fichier invalide.");
+    }
+    // reset input
+    try{ ev.target.value = ""; }catch(e){}
+  };
+  reader.readAsText(file);
+}
+
+function resetAllLocalData(){
+  if(!confirm("Tout remettre à zéro sur cet appareil ? (données + réglages)")) return;
+
+  try{
+    // 🔥 Reset total (le plus fiable) pour l'origine courante
+    // (comme ton app est en fichier/offline, ça ne touche que CE fichier/origine)
+    localStorage.clear();
+    try{ sessionStorage.clear(); }catch(e){}
+
+    // Remettre aussi les variables runtime à zéro avant reload (sécurité)
+    try{ s = {data:{}, extra:{}}; }catch(e){}
+    try{ appSettings = appDefaults(); appSaveSettings(appSettings); }catch(e){}
+
+    location.reload(true);
+  }catch(e){
+    alert("Reset impossible : " + (e && e.message ? e.message : e));
+  }
+}
+
+
+
+function isWeekend(d){
+  var dd = new Date(d);
+  var day = dd.getDay(); // 0=dimanche, 6=samedi
+  return day === 0 || day === 6;
+}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); render(); }
+function getBase(d) { if (d < START_TRACKING) return 0; var day = d.getDay(); if (day === 0 || day === 6) return 0; var c = contractForDate(d);
+  return (day === 5) ? (c.fri||7) : (c.monThu||8); }
+
+function add(v) {
+  if (isFutureDate(selDate)) { alert("Impossible de modifier une date future."); return; }
+  // ⛔ Week-end : on empêche l'ajout d'heures
+  if (selDate.getDay() === 0 || selDate.getDay() === 6) {
+    alert("Week-end : impossible d’ajouter des heures.");
+    return;
+  }
+  var k = toISO(selDate);
+  s.data[k] = (s.data[k] || 0) + v;
+  save();
+}
+function moveDay(n) { selDate.setDate(selDate.getDate()+n); selDate = clampToToday(selDate); render(); }
+function goToday() { selDate = new Date(REAL_TODAY.getTime()); render(); }
+
+function resetDay() { 
+  if(confirm("Effacer toutes les données pour ce jour ?")){ 
+    var k = toISO(selDate);
+    // Si c'était un CP, on rend 1 jour
+    if (s.extra[k] && s.extra[k].vacances) {
+      cpInc(1);
+    }
+    delete s.data[k];
+    delete s.extra[k];
+    save();
+  }
+}
+
+function signalerAbsence() {
+  if (isFutureDate(selDate)) { alert("Impossible de modifier une date future."); return; }
+  if (isWeekend(selDate)) { alert("Week-end : pas d\'absence à saisir."); return; }
+
+  if (isFutureDate(selDate)) { alert("Impossible de modifier une date future."); return; } 
+  var h = getBase(selDate); 
+  if (h <= 0) { alert("C'est déjà un jour de repos."); return; } 
+  if (confirm("Signaler une absence ? " + h + "h seront retirées du solde et les frais (trajet/panier) annulés.")) { 
+    var k = toISO(selDate); 
+    s.data[k] = -h; 
+    s.extra[k] = {chantier:"", zone:"", mode:"trajet", panier:false, voiture:false, isAbsence:true};
+    save(); 
+  } 
+}
+
+function toggleVacances(){
+  // Bloque futur + week-end (comme le reste)
+  if (isFutureDate(selDate)) { alert("Impossible de modifier une date future."); return; }
+  if (isWeekend(selDate)) { alert("Week-end : pas de vacances à saisir."); return; }
+
+  var k = toISO(selDate);
+  if(!s.extra[k]) s.extra[k] = {};
+
+  // Toggle
+  if (!s.extra[k].vacances) {
+    // Active CP (payé) : ne touche pas aux heures, mais bloque les frais
+    s.extra[k].noFeesBeforeVac = !!s.extra[k].noFees;
+    s.extra[k].vacances = true;
+    s.extra[k].noFees = true;
+    s.extra[k].panier = false;
+    s.extra[k].voiture = false;
+    s.extra[k].isAbsence = false;
+
+    // Décrémente le compteur CP (1 jour ouvré)
+    cpDec(1);
+  } else {
+    // Désactive CP : restaure l'état précédent des frais
+    s.extra[k].vacances = false;
+    s.extra[k].noFees = !!s.extra[k].noFeesBeforeVac;
+    delete s.extra[k].noFeesBeforeVac;
+
+    // Ré-incrémente si on retire un CP
+    cpInc(1);
+  }
+
+  save();
+}
+
+
+function openCPCalendar(){
+  // Ouvre la fenêtre CP et pré-remplit avec la date sélectionnée
+  var iso = toISO(selDate);
+  var sEl = document.getElementById("cpStart");
+  var eEl = document.getElementById("cpEnd");
+  if(sEl) sEl.value = iso;
+  if(eEl) eEl.value = iso;
+  openOverlay('cpOverlay');
+}
+
+function applyCPRange(){
+  var sEl = document.getElementById("cpStart");
+  var eEl = document.getElementById("cpEnd");
+  if(!sEl || !eEl) return;
+
+  var d1 = sEl.value;
+  var d2 = eEl.value;
+  if(!d1 || !d2){ alert("Choisis une date de début et de fin."); return; }
+
+  var start = new Date(d1 + "T00:00:00");
+  var end = new Date(d2 + "T00:00:00");
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) { alert("Dates invalides."); return; }
+  if (end.getTime() < start.getTime()) { alert("La date de fin doit être après le début."); return; }
+
+  var cur = new Date(start.getTime());
+  var applied = 0;
+  var appliedNew = 0;
+
+  while (cur.getTime() <= end.getTime()){
+    var day = cur.getDay(); // 0=dim, 6=sam
+    if (day !== 0 && day !== 6){
+      var iso = toISO(cur);
+      if(!s.extra[iso]) s.extra[iso] = {};
+      var already = !!s.extra[iso].vacances;
+
+      // CP (payé) : ne touche pas aux heures, mais bloque les frais
+      s.extra[iso].vacances = true;
+      s.extra[iso].noFees = true;
+      s.extra[iso].panier = false;
+      s.extra[iso].voiture = false;
+      s.extra[iso].isAbsence = false;
+
+      applied++;
+      if(!already) appliedNew++;
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+
+  // Décrémente le compteur seulement pour les nouveaux jours CP ajoutés
+  if(appliedNew > 0) cpDec(appliedNew);
+
+  save();
+  closeOverlay('cpOverlay');
+  alert("CP appliqué sur " + applied + " jour(s) ouvré(s).");
+}
+
+
+
+
+
+
+
+async function _generatePDF_original(){
+  const element = document.getElementById('pdf-content');
+  if(!element){ alert("Zone PDF introuvable"); return; }
+
+  document.body.classList.add("pdf-export");
+
+  const title = (document.getElementById('bilanTitle')?.innerText || "BILAN_MENSUEL").trim();
+  const filename = title.replace(/\s+/g,'_') + ".pdf";
+
+  try{
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const canvas = await _nodeToCanvas(element, 2);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+    const b64 = dataUrl.split(",")[1];
+    const jpegBytes = _b64ToU8(b64);
+
+    const pdfBlob = _makePdfOnePageJpeg(jpegBytes, canvas.width, canvas.height);
+    _downloadBlob(pdfBlob, filename);
+  }catch(e){
+    console.error(e);
+    alert("Export PDF impossible (capture).");
+  }finally{
+    document.body.classList.remove("pdf-export");
+  }
+}
+
+
+
+function openSelectionBilan() { document.getElementById("selectionBilanOverlay").style.display = "flex"; }
+function openOverlay(id) { document.getElementById(id).style.display = "flex"; }
+function closeOverlay(id) { document.getElementById(id).style.display = "none"; }
+function ouvrirEtFermer(type) { closeOverlay('selectionBilanOverlay'); document.getElementById("bilanOverlay").style.display = "flex"; renderBilan(type); }
+
+function renderBilan(type) {
+  var html = "";
+  var totalHeures = 0, totalTrajetE = 0, totalTransportE = 0, totalPaniers = 0, countPaniers = 0, totalAbs = 0;
+  var start, end;
+
+  if(type === 'hebdo') {
+    start = new Date(selDate);
+    var day = start.getDay(); 
+    var diff = start.getDate() - day + (day == 0 ? -6 : 1);
+    start.setDate(diff); start.setHours(12,0,0,0);
+    end = new Date(start); end.setDate(start.getDate() + 6);
+    document.getElementById("bilanTitle").innerText = "BILAN HEBDO - Semaine du " + start.getDate() + "/" + (start.getMonth()+1);
+  } else {
+    document.getElementById("bilanTitle").innerText = "BILAN MENSUEL - " + selDate.toLocaleDateString('fr-FR', {month:'long', year:'numeric'}).toUpperCase();
+    start = new Date(selDate.getFullYear(), selDate.getMonth(), 1, 12, 0, 0);
+    end = new Date(selDate.getFullYear(), selDate.getMonth() + 1, 0, 12, 0, 0);
+  }
+
+  html += `<tr><th>Jour</th><th>Date</th><th>Chantier</th><th class="right">Trajet</th><th class="right">Trans.</th><th class="right">Pan.</th><th>Abs.</th><th class="right">Heures</th></tr>`;
+
+  for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)){
+    let iso = toISO(d);
+    let base = getBase(d);
+    let userMod = s.data[iso] || 0;
+    let ex = s.extra[iso] || {};
+    
+    let estVraimentPasse = (d.getTime() < REAL_TODAY.getTime() - 43200000); 
+    let aSaisieManuelle = (s.data.hasOwnProperty(iso) || ex.chantier || ex.panier || ex.voiture || ex.zone || ex.isAbsence);
+    let actif = estVraimentPasse || aSaisieManuelle;
+    let heuresJour = actif ? (base + userMod) : 0;
+    
+    let valTrajet = 0;
+    let valTransp = 0;
+
+    if (!ex.isAbsence && !ex.noFees && ex.zone) {
+    // 🚗 Voiture ON => trajet + transport
+    if (ex.voiture) {
+        valTrajet = TRAJET_RATES[ex.zone] || 0;
+        valTransp = TRANSPORT_RATES[ex.zone] || 0;
+    } else {
+        // Sinon, on suit le mode du chantier (trajet OU trajet+transport)
+        if (ex.mode === 'trajet') {
+            valTrajet = TRAJET_RATES[ex.zone] || 0;
+        } else if (ex.mode === 'transport') {
+            valTrajet = TRAJET_RATES[ex.zone] || 0;
+            valTransp = TRANSPORT_RATES[ex.zone] || 0;
+        }
+    }
+}
+
+
+    if (actif) {
+        totalHeures += heuresJour;
+        totalTrajetE += valTrajet; 
+        totalTransportE += valTransp; 
+        if(!ex.isAbsence && ex.panier){ countPaniers += 1; totalPaniers += PANIER_PRICE; }
+        totalAbs += (ex.isAbsence ? 1 : 0);
+    }
+
+    let rowClass = (d.getDay() === 0 || d.getDay() === 6) ? "row-weekend" : "";
+    html += `<tr class="${rowClass}">
+      <td>${d.toLocaleDateString('fr-FR', {weekday: 'short'})}</td>
+      <td>${d.getDate()}</td>
+      <td style="text-align:left">${ex.chantier || "-"}</td>
+      <td class="right">${(actif && !ex.isAbsence && !ex.noFees && valTrajet > 0) ? valTrajet.toFixed(2)+"€" : "-"}</td>
+      <td class="right">${(actif && !ex.isAbsence && !ex.noFees && valTransp > 0) ? valTransp.toFixed(2)+"€" : "-"}</td>
+      <td class="right">${(actif && !ex.isAbsence && ex.panier) ? (PANIER_PRICE.toFixed(2)+"€") : "-"}</td>
+      <td>${ex.isAbsence ? "✔" : "-"}</td>
+      <td class="right">${actif ? heuresJour.toFixed(2).replace(".", ",") + "h" : "-"}</td>
+    </tr>`;
+  }
+  html += `<tr class="total-line"><td colspan="3">TOTAL</td><td class="right">${totalTrajetE.toFixed(2)}€</td><td class="right">${totalTransportE.toFixed(2)}€</td><td class="right">${countPaniers ? (countPaniers + "×" + PANIER_PRICE.toFixed(2) + "€ = " + totalPaniers.toFixed(2) + "€") : "0€"}</td><td>${totalAbs}</td><td class="right">${totalHeures.toFixed(2).replace(".", ",")}h</td></tr>`;
+  document.getElementById("bilanBody").innerHTML = html;
+}
+
+function render() {
+  var iso = toISO(selDate);
+  var base = getBase(selDate);
+  document.getElementById("dateTxt").textContent = selDate.toLocaleDateString("fr-FR", {weekday:'long', day:'numeric', month:'short'});
+  document.getElementById("statusBadge").innerHTML = base > 0 ? "💼 TRAVAIL ("+base+"h)" : "☀️ REPOS";
+
+  var ex = s.extra[iso] || {};
+  if (ex.vacances) {
+    document.getElementById("statusBadge").innerHTML = "🌴 CONGÉ PAYÉ (CP)";
+  }
+
+
+// ⛔ Saisie désactivée le week-end (samedi/dimanche)
+var isWeekend = (selDate.getDay() === 0 || selDate.getDay() === 6);
+var manual = document.getElementById("manualInput");
+if (manual) {
+  manual.disabled = isWeekend;
+  manual.placeholder = isWeekend ? "Week-end : saisie désactivée" : "Ex: 1h30 ou 2";
+}
+document.querySelectorAll('button[onclick^="add("], .btn-ok').forEach(function(btn){
+  btn.disabled = isWeekend;
+  btn.style.opacity = isWeekend ? "0.45" : "1";
+  btn.style.cursor = isWeekend ? "not-allowed" : "pointer";
+});
+
+  var userAdds = 0;
+  for(var k in s.data) userAdds += s.data[k];
+  
+  // --- CALCUL PROPRE (sans retrait automatique) ---
+  // s.data = tes ajouts manuels (ex: +30min, +1h, etc.)
+  var surplusReal = 0; // on ne retire rien automatiquement
+  // +1h/semaine automatique : ajoutée uniquement pour les semaines TERMINÉES (vendredi passé)
+  function _lastFridayFor(d){
+    var lf = new Date(d.getTime());
+    var diff = lf.getDay() - 5; // vendredi=5
+    if(diff < 0) diff += 7;
+    lf.setDate(lf.getDate() - diff);
+    lf.setHours(23,59,59,999);
+    return lf;
+  }
+  function _mondayOfWeek(d){
+    var m = new Date(d.getTime());
+    m.setHours(0,0,0,0);
+    var wd = m.getDay(); // 0 dim..6 sam
+    var delta = (wd === 0) ? 6 : (wd - 1); // lundi=0
+    m.setDate(m.getDate() - delta);
+    return m;
+  }
+
+  var lastFriday = _lastFridayFor(REAL_TODAY);
+  var ws = _mondayOfWeek(BONUS_START);
+  var fixedSup = 0;
+  while(ws.getTime() <= lastFriday.getTime()){
+    var cws = contractForDate(ws);
+    fixedSup += (Number(cws.weeklyFixedOvertime) || 0);
+    ws.setDate(ws.getDate() + 7);
+  }
+
+  var totalReal = Math.round((INITIAL_REPORT + userAdds + fixedSup) * 100) / 100;
+
+  // MISE À JOUR : Couleur rouge si négatif
+  var card = document.getElementById("headerCard");
+  if(totalReal < 0) {
+      card.style.background = "var(--danger)";
+      card.style.boxShadow = "0 10px 30px rgba(239,68,68,0.3)";
+  } else {
+      card.style.background = "var(--primary)";
+      card.style.boxShadow = "0 10px 30px rgba(37,99,235,0.3)";
+  }
+
+  // Estimation fin de mois : solde actuel + bonus hebdo qui seront acquis d'ici fin de mois
+  var lastDay = new Date(REAL_TODAY.getFullYear(), REAL_TODAY.getMonth() + 1, 0, 23, 59, 59);
+  var lastFridayMonth = _lastFridayFor(lastDay);
+  var ws2 = _mondayOfWeek(BONUS_START);
+  var fixedSupMonth = 0;
+  while(ws2.getTime() <= lastFridayMonth.getTime()){
+    var cws2 = contractForDate(ws2);
+    fixedSupMonth += (Number(cws2.weeklyFixedOvertime) || 0);
+    ws2.setDate(ws2.getDate() + 7);
+  }
+  var estimTotal = Math.round((INITIAL_REPORT + userAdds + fixedSupMonth) * 100) / 100;
+
+  document.getElementById("totalH").textContent = totalReal.toFixed(2).replace(".",",") + " h";
+  document.getElementById("totalHM").textContent = Math.floor(totalReal) + "h " + Math.round((totalReal%1)*60).toString().padStart(2,"0") + "m";
+  document.getElementById("estimH").textContent = estimTotal.toFixed(2).replace(".",",") + " h";
+
+  var ex = s.extra[iso] || {panier:false, voiture:false, mode:'trajet', chantier:"", zone:"", isAbsence:false};
+  document.getElementById("btnPanier").style.background = ex.panier ? "var(--success)" : "var(--btn-pill)";
+  document.getElementById("btnVoiture").style.background = ex.voiture ? "var(--primary)" : "var(--btn-pill)";
+  document.getElementById("prevName").textContent = ex.chantier || "—";
+  document.getElementById("prevZone").textContent = ex.zone || "—";
+  document.getElementById("btnModeTrajet").style.background = (ex.mode === 'trajet') ? "var(--primary)" : "var(--btn-pill)";
+  document.getElementById("btnModeTransp").style.background = (ex.mode === 'transport') ? "var(--primary)" : "var(--btn-pill)";
+
+  // 🔢 Compteur CP sur le bouton Congé
+  cpUpdateButton();
+  var bv = document.getElementById("btnVac");
+  if(bv){
+    bv.style.background = (ex.vacances) ? "var(--primary)" : "var(--btn-pill)";
+    bv.style.color = ex.vacances ? "#111" : "#ffd166";
+  }
+
+}
+
+function openChantier() { document.getElementById("chantierOverlay").style.display = "flex"; }
+function promptChantierName() { var n = prompt("Nom du chantier ?"); if(n) updateExtra('chantier', n); }
+function promptChantierZone() { var z = prompt("Zone (1A-7) ?"); if(z) updateExtra('zone', z.toUpperCase()); }
+function setMode(m) { updateExtra('mode', m); }
+function togglePanier() {
+  if (isFutureDate(selDate)) { alert("Impossible de modifier une date future."); return; }
+  if (isWeekend(selDate)) { alert("Week-end : panier interdit."); return; }
+
+  if (isFutureDate(selDate)) { alert("Impossible de modifier une date future."); return; } var k = toISO(selDate); if(!s.extra[k]) s.extra[k]={}; s.extra[k].panier=!s.extra[k].panier; save(); }
+
+function toggleVoiture() {
+  if (isFutureDate(selDate)) { alert("Impossible de modifier une date future."); return; }
+  if (isWeekend(selDate)) { alert("Week-end : voiture/transport interdit."); return; }
+
+  if (isFutureDate(selDate)) { alert("Impossible de modifier une date future."); return; } 
+  var k = toISO(selDate); 
+  if(!s.extra[k]) s.extra[k]={};
+
+  // Si absence : pas de voiture/transport
+  if (s.extra[k].isAbsence) { 
+    alert("Jour en absence : voiture/transport désactivé."); 
+    return; 
+  }
+
+  // OFF -> ON : mémorise le mode d'origine du jour puis force trajet + transport
+  if (!s.extra[k].voiture) {
+    // mémoriser le mode d'origine (issu du chantier)
+    if (!s.extra[k].originalMode) {
+      s.extra[k].originalMode = s.extra[k].mode || getChantierMode();
+    }
+    s.extra[k].voiture = true;
+    s.extra[k].noFees = false;
+    save();
+    return;
+  }
+
+  // ON -> OFF : enlève les frais ET restaure le mode d'origine
+  s.extra[k].voiture = false;
+  s.extra[k].noFees = false;
+  if (s.extra[k].originalMode) {
+    s.extra[k].mode = s.extra[k].originalMode;
+  }
+  save(); 
+}
+
+
+
+
+function updateExtra(f, v) { var k = toISO(selDate); if(!s.extra[k]) s.extra[k]={}; s.extra[k][f]=v; save(); }
+function processManual() {
+  var k = toISO(selDate);
+  if(s.extra[k] && s.extra[k].vacances){ alert("Congé payé : impossible d\'ajouter des heures sur ce jour."); return; }
+ var i=document.getElementById("manualInput"); var v=i.value.replace(",","."); if(v.includes("h")){var p=v.split("h");add(parseFloat(p[0]||0)+(parseFloat(p[1]||0)/60));}else if(!isNaN(parseFloat(v))){add(parseFloat(v));} i.value=""; }
+
+render();
 </script>
+
+<!-- Overlay Congés Payés -->
+<div id="cpOverlay" class="overlay" style="display:none;">
+  <div class="overlay-card">
+    <div class="overlay-title">🌴 Congés payés (CP)</div>
+    <div class="overlay-sub">Choisis une période (jours ouvrés uniquement).</div>
+
+    <div class="form-row">
+      <label>Début</label>
+      <input id="cpStart" type="date" />
+    </div>
+
+    <div class="form-row">
+      <label>Fin</label>
+      <input id="cpEnd" type="date" />
+    </div>
+
+    <div class="btn-grid-2" style="margin-top:12px;">
+      <button class="pill pill-green" onclick="applyCPRange()">✅ Appliquer</button>
+      <button class="pill" onclick="closeOverlay('cpOverlay')">Annuler</button>
+    </div>
+
+    <div style="margin-top:10px;font-size:12px;opacity:.85;">
+      • Les week-ends sont ignorés automatiquement.<br/>
+      • CP = payé : les heures restent normales, mais aucun frais (panier/voiture/trajet/transport).
+    </div>
+  </div>
+</div>
+
+
+<!-- Overlay Réglages (Généraux) -->
+<div id="settingsOverlay" class="overlay" style="display:none;">
+  <div class="overlay-card">
+    <div class="overlay-title">⚙️ Réglages</div>
+    <div class="overlay-sub">Paramètres généraux (profil, heures, congés, frais, sauvegarde).</div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tabProfil" onclick="switchSettingsTab(event,'tabProfil')">👤 Profil</button>
+      <button class="tab-btn" data-tab="tabHeures" onclick="switchSettingsTab(event,'tabHeures')">⏱️ Heures</button>
+      <button class="tab-btn" data-tab="tabCP" onclick="switchSettingsTab(event,'tabCP')">🌴 CP</button>
+      <button class="tab-btn" data-tab="tabFrais" onclick="switchSettingsTab(event,'tabFrais')">🚗 Frais</button>
+      <button class="tab-btn" data-tab="tabBackup" onclick="switchSettingsTab(event,'tabBackup')">🧰 Sauvegarde</button>
+    </div>
+
+    <!-- PROFIL -->
+    <div id="tabProfil" class="tab-panel" style="display:block;">
+      <div class="form-row">
+        <label>Nom affiché (badge + PDF)</label>
+        <input id="setUserName" type="text" placeholder="Ex: PETIT CLÉMENT" />
+      </div>
+
+      <div class="form-row">
+        <label>Titre (onglet / écran)</label>
+        <input id="setAppTitle" type="text" placeholder="Ex: TimeTracker - PETIT CLEMENT" />
+      </div>
+    </div>
+
+    <!-- HEURES -->
+    <div id="tabHeures" class="tab-panel" style="display:none;">
+      <div class="form-row">
+        <label>Solde saisi (heures)</label>
+        <input id="setInitialReport" type="number" step="0.01" />
+      </div>
+
+      <div class="form-row">
+        <label>Solde à la date du</label>
+        <input id="setStartTracking" type="date" />
+      </div>
+
+      <div class="form-row">
+        <label>Heures par jour (Lun-Jeu)</label>
+        <input id="setHoursMonThu" type="number" step="0.01" />
+      </div>
+
+      <div class="form-row">
+        <label>Heures du vendredi</label>
+        <input id="setHoursFri" type="number" step="0.01" />
+      </div>
+
+      <div class="form-row">
+        <label>Base “référence” utilisée pour le calcul (ex: 7.6)</label>
+        <input id="setWeeklyBase" type="number" step="0.01" />
+      </div>
+      <div class="form-row">
+        <label>Heures supplémentaires fixes par semaine</label>
+        <input id="setWeeklyFixedOvertime" type="number" step="0.01" />
+      </div>
+      <div class="form-row">
+        <label>Contrat (libellé affiché)</label>
+        <input id="setContractLabel" type="text" placeholder="Ex: 39h travaillées / 38h payées" />
+      </div>
+      <div class="form-row">
+        <label>Type de contrat (applique les calculs automatiquement)</label>
+        <select id="setContractPreset" style="padding:10px;border-radius:12px;">
+          <option value="39_38">39h travaillées / 38h payées (+1h)</option>
+          <option value="39">39h</option>
+          <option value="37_5">37h30</option>
+          <option value="35">35h</option>
+</select>
+      </div>
+      <div class="form-row">
+        <label>Date d’effet du contrat</label>
+        <input id="setContractEffective" type="date" />
+        <div class="hint">Si tu mets une date future, le nouveau contrat s’appliquera uniquement à partir de cette date (le passé ne bouge pas).</div>
+      </div>
+
+      <div class="form-row">
+        <label>Mes contrats (profils)</label>
+        <select id="contractProfileSelect" style="padding:10px;border-radius:12px;width:100%;">
+          <option value="">— Aucun —</option>
+        </select>
+        <div class="hint" style="margin-top:8px;">
+          Astuce : pour un changement d’entreprise, mets <b>Moi (personnalisé)</b>, règle tes heures, puis enregistre en profil (ex: “Entreprise X – 37h30”).
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Nom du contrat à enregistrer</label>
+        <input id="contractProfileName" type="text" placeholder="Ex: Entreprise X - 37h30" />
+      </div>
+
+      
+
+
+      <div class="hint">Astuce : la plupart du temps tu laisses 7.6 (semaine 39h).</div>
+    </div>
+
+    <!-- CP -->
+    <div id="tabCP" class="tab-panel" style="display:none;">
+      <div class="form-row">
+        <label>CP restants (actuel)</label>
+        <input id="setCpRemaining" type="number" min="0" step="1" />
+      </div>
+
+      <div class="form-row">
+        <label>Quota CP après reset</label>
+        <input id="setCpQuota" type="number" min="0" step="1" />
+      </div>
+
+      <div class="form-row">
+        <label>Date de réinitialisation (chaque année)</label>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:11px;opacity:.8;">Jour</label>
+            <input id="setCpResetDay" type="number" min="1" max="31" step="1" />
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:11px;opacity:.8;">Mois</label>
+            <input id="setCpResetMonth" type="number" min="1" max="12" step="1" />
+          </div>
+        </div>
+      </div>
+
+      <div id="cpNextResetInfo" class="hint">—</div>
+
+      <div class="btn-grid-2" style="margin-top:12px;">
+        <button class="pill" style="background:var(--btn-pill)" onclick="forceCpReset()">🔄 Forcer reset</button>
+        <button class="pill" style="background:var(--btn-pill)" onclick="recomputeCpFromData()">🧮 Recalculer</button>
+      </div>
+      <div class="hint">“Recalculer” recompte les jours CP présents dans tes données et ajuste le reste.</div>
+    </div>
+
+    <!-- FRAIS -->
+    <div id="tabFrais" class="tab-panel" style="display:none;">
+      <div class="form-row">
+        <label>Prix du panier repas (€)</label>
+        <input id="setPanierPrice" type="number" step="0.01" />
+      </div>
+      <div class="hint" style="margin-bottom:10px;">
+        Modifie ici la grille <b>Trajet</b> et <b>Transport</b> par zone. C’est appliqué partout (bilans + calculs).
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+        <button class="pill pill-blue" style="flex:1;min-width:140px;padding:12px 14px;" onclick="saveRatesTable()">💾 Enregistrer tout</button>
+        <button class="pill" style="flex:1;min-width:140px;background:#475569;padding:12px 14px;" onclick="resetRatesDefaults()">↩️ Grille d’origine</button>
+      </div>
+
+      <div id="ratesTableWrap" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:12px;overflow:auto;">
+        <!-- table injectée en JS -->
+      </div>
+
+      <div class="hint" style="margin-top:10px;">
+        Astuce : tu peux saisir au clavier (ex: 4.08). Les valeurs sont enregistrées à <b>2 décimales</b>.
+      </div>
+    </div>
+
+    <!-- BACKUP -->
+    <div id="tabBackup" class="tab-panel" style="display:none;">
+      <div class="hint">Sauvegarde/Restaurer : pratique si tu changes de téléphone/PC.</div>
+
+      <div class="btn-grid-2" style="margin-top:12px;">
+        <button class="pill pill-green" onclick="exportAllData()">📤 Export JSON</button>
+        <label class="pill" style="background:#475569;cursor:pointer;">
+          📥 Import JSON
+          <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importAllData(event)" />
+        </label>
+      </div>
+
+      <button class="pill" style="width:100%;margin-top:12px;background:var(--danger)" onclick="resetAllLocalData()">🧨 Réinitialiser TOUT</button>
+      <div class="hint">⚠️ Réinitialiser tout efface tes données + réglages sur cet appareil.</div>
+    </div>
+
+    <div class="btn-grid-2" style="margin-top:16px;">
+      <button class="pill pill-blue" onclick="saveSettings()">✅ Enregistrer</button>
+      <button class="pill" onclick="closeOverlay('settingsOverlay')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+/* === v62 : Réglages simples + bouton réglages OK === */
+(function(){
+  function closestRow(el){
+    try{
+      return el && (el.closest(".form-row") || el.closest(".setting-row") || el.parentElement);
+    }catch(e){ return null; }
+  }
+  function hideRowById(id){
+    var el = document.getElementById(id);
+    var r = closestRow(el);
+    if(r) r.style.display = "none";
+  }
+  function showRowById(id){
+    var el = document.getElementById(id);
+    var r = closestRow(el);
+    if(r) r.style.display = "";
+  }
+
+  function renameLabel(forId, text){
+    try{
+      var el = document.getElementById(forId);
+      if(!el) return;
+      var row = closestRow(el);
+      if(!row) return;
+      var lab = row.querySelector("label");
+      if(lab) lab.textContent = text;
+    }catch(e){}
+  }
+
+  function autoBaseForPreset(preset){
+    // base interne (pas affichée) : 7.6 pour 39/38 et 39, 7.5 pour 37h30, 7.0 pour 35h
+    var wb = document.getElementById("setWeeklyBase");
+    if(!wb) return;
+    if(preset === "37_5") wb.value = 7.5;
+    else if(preset === "35") wb.value = 7.0;
+    else wb.value = 7.6;
+  }
+
+  function applySimple(){
+    // enlever le bruit
+    hideRowById("setContractLabel");        // libellé affiché
+    hideRowById("contractProfileSelect");   // profils
+    hideRowById("contractProfileName");     // nom profil
+    hideRowById("setChantierName");         // nom chantier (si présent)
+    // champ base masqué (calcul interne)
+    showRowById("setWeeklyBase");
+
+    // renommer proprement
+    renameLabel("setContractPreset", "Mon contrat");
+    renameLabel("setContractEffective", "À partir du");
+
+    // champs heures/base/HS toujours visibles (par contrat)
+    ["setHoursMonThu","setHoursFri","setWeeklyBase","setWeeklyFixedOvertime"].forEach(function(id){
+      showRowById(id);
+    });
+// base interne auto selon contrat choisi (ou selon le dernier preset)
+    if(cp){
+      if(cp.value !== "moi") autoBaseForPreset(cp.value);
+      cp.onchange = function(){
+        var v = cp.value;
+        if(v !== "moi") autoBaseForPreset(v);
+        applySimple();
+      };
+    }
+  }
+
+  // init moved to __tt_boot()
+
+  // garantir que le bouton réglages continue de fonctionner
+  var _os = window.openSettings;
+  if(typeof _os === "function"){
+    window.openSettings = function(){
+      var r = _os.apply(this, arguments);
+      setTimeout(applySimple, 0);
+      return r;
+    }
+  } else {
+    // fallback : au cas où l'app utilise un autre handler
+    setTimeout(applySimple, 300);
+  }
+})();
+</script>
+
+
+<!-- === SIGNATURE PDF (WORKING) === -->
+<div id="signatureModal" class="overlay" style="display:none">
+  <div class="modal">
+    <h3>✍️ Signature</h3>
+    <p style="margin-top:-6px;opacity:.85">Signe ci-dessous (souris ou doigt)</p>
+    <canvas id="sigCanvas" width="320" height="160" style="border:1px solid rgba(255,255,255,.18);border-radius:10px;background:#fff;touch-action:none"></canvas>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button type="button" onclick="clearSig()">Effacer</button>
+      <button type="button" onclick="validateSig()">Valider</button>
+      <button type="button" onclick="closeSig()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _sigCanvas=null, _sigCtx=null, _sigDrawing=false;
+
+function openSig(){
+  const m=document.getElementById("signatureModal");
+  if(m) m.style.display="block";
+}
+function closeSig(){
+  const m=document.getElementById("signatureModal");
+  if(m) m.style.display="none";
+}
+function clearSig(){
+  if(!_sigCtx || !_sigCanvas) return;
+  _sigCtx.clearRect(0,0,_sigCanvas.width,_sigCanvas.height);
+}
+
+function validateSig(){
+  if(!_sigCanvas) return;
+  const data = _sigCanvas.toDataURL("image/png");
+  const img=document.getElementById("pdfSignatureImg");
+  const block=document.getElementById("pdfSignatureBlock");
+  if(block) block.style.display="block";
+  if(img){
+    img.src=data;
+    img.style.display="block";
+  }
+  // Nom depuis profil si dispo
+  const name = (document.getElementById("profileName")?.value || document.getElementById("setProfileName")?.value || "").trim();
+  const d = new Date();
+  const dd = d.toLocaleDateString("fr-FR");
+  const n1=document.getElementById("pdfSigName");
+  const d1=document.getElementById("pdfSigDate");
+  if(n1) n1.textContent = name || "—";
+  if(d1) d1.textContent = dd;
+
+  closeSig();
+
+  // Wait for the image to be ready before generating the PDF
+  const go = ()=>{ if(typeof _generatePDF_original === "function") _generatePDF_original(); };
+  if(img && img.src){
+    if(img.complete) setTimeout(go, 150);
+    else {
+      img.onload = ()=>setTimeout(go, 150);
+      img.onerror = ()=>setTimeout(go, 200);
+    }
+  } else {
+    setTimeout(go, 150);
+  }
+}
+
+
+// Main flow called by PDF buttons
+function generatePDFFlow(e){
+  try{
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+  }catch(err){}
+  // hide previous signature if any
+  const block=document.getElementById("pdfSignatureBlock");
+  if(block) block.style.display="none";
+
+  const want = window.confirm("Ajouter une signature au PDF ?");
+  if(!want){
+    if(typeof _generatePDF_original === "function") _generatePDF_original();
+    return false;
+  }
+  openSig();
+  return false;
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  _sigCanvas = document.getElementById("sigCanvas");
+  if(!_sigCanvas) return;
+  _sigCtx = _sigCanvas.getContext("2d");
+  _sigCtx.lineWidth = 2;
+  _sigCtx.lineCap = "round";
+
+  _sigCanvas.addEventListener("mousedown", function(e){
+    _sigDrawing=true; _sigCtx.beginPath(); _sigCtx.moveTo(e.offsetX,e.offsetY);
+  });
+  _sigCanvas.addEventListener("mousemove", function(e){
+    if(!_sigDrawing) return; _sigCtx.lineTo(e.offsetX,e.offsetY); _sigCtx.stroke();
+  });
+  window.addEventListener("mouseup", function(){ _sigDrawing=false; });
+
+  _sigCanvas.addEventListener("touchstart", function(e){
+    e.preventDefault(); _sigDrawing=true;
+    const r=_sigCanvas.getBoundingClientRect();
+    const t=e.touches[0];
+    _sigCtx.beginPath(); _sigCtx.moveTo(t.clientX-r.left,t.clientY-r.top);
+  }, {passive:false});
+  _sigCanvas.addEventListener("touchmove", function(e){
+    e.preventDefault(); if(!_sigDrawing) return;
+    const r=_sigCanvas.getBoundingClientRect();
+    const t=e.touches[0];
+    _sigCtx.lineTo(t.clientX-r.left,t.clientY-r.top); _sigCtx.stroke();
+  }, {passive:false});
+  _sigCanvas.addEventListener("touchend", function(){ _sigDrawing=false; });
+});
+</script>
+
+<script>
+
+function _getAllCssText(){
+  let css = "";
+  for(const ss of Array.from(document.styleSheets)){
+    try{
+      const rules = ss.cssRules;
+      if(!rules) continue;
+      for(const r of Array.from(rules)) css += r.cssText + "\n";
+    }catch(e){}
+  }
+  return css;
+}
+function _nodeToCanvas(node, scale=2){
+  return new Promise((resolve, reject)=>{
+    const rect = node.getBoundingClientRect();
+    const w = Math.ceil(rect.width);
+    const h = Math.ceil(rect.height);
+    const cssText = _getAllCssText();
+    const clone = node.cloneNode(true);
+
+    const wrapper = document.createElement("div");
+    wrapper.setAttribute("xmlns","http://www.w3.org/1999/xhtml");
+    const style = document.createElement("style");
+    style.textContent = cssText;
+    wrapper.appendChild(style);
+    wrapper.appendChild(clone);
+
+    const serialized = new XMLSerializer().serializeToString(wrapper);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <foreignObject width="100%" height="100%">${serialized}</foreignObject>
+    </svg>`;
+
+    const img = new Image();
+    img.onload = ()=>{
+      const canvas = document.createElement("canvas");
+      canvas.width = w * scale;
+      canvas.height = h * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(scale,0,0,scale,0,0);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img,0,0);
+      resolve(canvas);
+    };
+    img.onerror = (e)=>reject(e);
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  });
+}
+function _b64ToU8(b64){
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return arr;
+}
+function _concatU8(chunks){
+  let len=0;
+  for(const c of chunks) len += c.length;
+  const out = new Uint8Array(len);
+  let off=0;
+  for(const c of chunks){ out.set(c, off); off += c.length; }
+  return out;
+}
+function _txt(s){ return new TextEncoder().encode(s); }
+
+function _makePdfOnePageJpeg(jpegBytes, imgPxW, imgPxH){
+  const pageW = 595.28, pageH = 841.89;
+  const margin = 18;
+  const maxW = pageW - margin*2;
+  const maxH = pageH - margin*2;
+
+  const imgRatio = imgPxW / imgPxH;
+  let drawW = maxW;
+  let drawH = drawW / imgRatio;
+  if(drawH > maxH){ drawH = maxH; drawW = drawH * imgRatio; }
+  const x = (pageW - drawW)/2;
+  const y = pageH - margin - drawH;
+
+  const chunks = [];
+  const offsets = [];
+  let cursor = 0;
+
+  function add(chunk){ chunks.push(chunk); cursor += chunk.length; }
+  function beginObj(n, str){ offsets[n]=cursor; add(_txt(str)); }
+
+  add(_txt("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"));
+
+  beginObj(1, "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+  beginObj(2, "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+  beginObj(3, `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`);
+
+  offsets[4]=cursor;
+  add(_txt(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${imgPxW} /Height ${imgPxH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`));
+  add(jpegBytes);
+  add(_txt("\nendstream\nendobj\n"));
+
+  const content = `q\n${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)} cm\n/Im0 Do\nQ\n`;
+  beginObj(5, `5 0 obj\n<< /Length ${content.length} >>\nstream\n${content}endstream\nendobj\n`);
+
+  const xrefOffset = cursor;
+  const size = 6;
+  let xref = `xref\n0 ${size}\n`;
+  xref += "0000000000 65535 f \n";
+  for(let i=1;i<size;i++){
+    const off = (offsets[i]||0).toString().padStart(10,"0");
+    xref += `${off} 00000 n \n`;
+  }
+  add(_txt(xref));
+  add(_txt(`trailer\n<< /Size ${size} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`));
+
+  return new Blob([_concatU8(chunks)], {type:"application/pdf"});
+}
+
+function _downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* --- PWA --- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+
+const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Ces variables sont utilisées par le reste du fichier
+window.__TT_USER = null;
+
+// Helper (peut cohabiter avec ceux existants)
+function __tt_setText(selector, value) {
+  try {
+    const el = document.querySelector(selector);
+    if (el) el.textContent = value;
+  } catch (e) {}
+}
+
+async function __tt_boot() {
+  const { data, error } = await sb.auth.getSession();
+  const session = data?.session;
+  if (!session) {
+    // Pas connecté -> retour à index
+    location.href = './index.html';
+    return;
+  }
+
+  window.__TT_USER = session.user;
+
+  // IMPORTANT : stockage séparé par utilisateur
+  // On remplace la clé "tracker_" par "tracker_<userId>"
+  window.STORAGE_KEY = 'tracker_' + session.user.id;
+  window.STARTUP_DONE_KEY = 'startup_done_' + session.user.id;
+
+  // Optionnel : afficher email quelque part si le fichier contient un badge
+  __tt_setText('#ttUserEmail', session.user.email || '');
+
+  // Déconnexion si bouton présent
+  const logoutBtn = document.getElementById('ttLogout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      await sb.auth.signOut();
+      location.href = './index.html';
+    });
+  }
+
+  // Lancer l'init de l'app (fonction existante dans ton fichier)
+  if (typeof applySimple === 'function') {
+    applySimple();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', __tt_boot);
+</script>
+
+</body>
+</html>
