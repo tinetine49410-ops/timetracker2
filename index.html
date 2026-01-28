@@ -1,129 +1,29 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TimeTracker — Connexion</title>
-  <meta name="theme-color" content="#0b1020" />
-  <link rel="manifest" href="manifest.json" />
-  <style>
-    :root {
-      --bg:#05060a; --card:#0b1020cc; --stroke:#1a2a45; --text:#e9eefc;
-      --muted:#a6b3d6; --green:#19c37d; --blue:#3578ff; --red:#ff4b4b;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
-      background:radial-gradient(1200px 600px at 30% 20%, #0b1633 0%, #05060a 55%, #000 100%);
-      color:var(--text); padding:24px;
-    }
-    .card{width:min(520px,100%); background:var(--card); border:1px solid var(--stroke);
-      border-radius:22px; box-shadow:0 18px 60px rgba(0,0,0,.55); padding:22px 22px 18px;
-      backdrop-filter: blur(10px);
-    }
-    h1{margin:0 0 6px; font-size:26px}
-    p{margin:0 0 16px; color:var(--muted)}
-    label{display:block; font-size:14px; color:var(--muted); margin:12px 0 6px}
-    input{width:100%; padding:14px 14px; border-radius:14px; border:1px solid var(--stroke);
-      background:#0b1225; color:var(--text); outline:none;
-    }
-    .row{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
-    button{flex:1; min-width:200px; cursor:pointer; padding:14px 14px; border-radius:14px;
-      border:0; font-weight:700; letter-spacing:.2px;
-    }
-    .primary{background:var(--green); color:#062012}
-    .secondary{background:var(--blue); color:#06122b}
-    .ghost{background:transparent; border:1px solid var(--stroke); color:var(--text)}
-    .msg{margin-top:14px; padding:12px 12px; border-radius:14px; border:1px solid var(--stroke);
-      background:#0b1225; color:var(--muted); min-height:44px;
-    }
-    .ok{color:#7CFFB2}
-    .err{color:#ff8a8a}
-    .small{margin-top:10px; color:var(--muted); font-size:12px; line-height:1.35}
-    a{color:var(--muted)}
-  </style>
+  <meta charset="UTF-8">
+  <title>TimeTracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-  <div class="card">
-    <h1>🔐 Connexion</h1>
-    <p>Connexion par e-mail / mot de passe (Supabase).</p>
 
-    <label for="email">Email</label>
-    <input id="email" type="email" autocomplete="email" placeholder="ex: prenom.nom@exemple.com" />
+<h1>TimeTracker</h1>
+<p>Utilisateur : <strong id="userNameDisplay"></strong></p>
+<p>Solde : <strong id="balanceDisplay"></strong></p>
 
-    <label for="password">Mot de passe</label>
-    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const raw = localStorage.getItem("timeTrackerConfig");
+  if (!raw) {
+    window.location.href = "app.html";
+    return;
+  }
+  const config = JSON.parse(raw);
+  document.getElementById("userNameDisplay").textContent = config.name;
+  document.getElementById("balanceDisplay").textContent =
+    config.currentBalance.toFixed(2) + " h";
+});
+</script>
 
-    <div class="row">
-      <button id="login" class="primary" type="button">Se connecter</button>
-      <button id="signup" class="secondary" type="button">Créer un compte</button>
-    </div>
-
-    <div class="row">
-      <button id="logout" class="ghost" type="button">Se déconnecter</button>
-    </div>
-
-    <div id="msg" class="msg">Prêt.</div>
-    <div class="small">
-      Après connexion, tu es envoyé vers <b>app.html</b>.
-      <br/>Astuce : si tu utilises GitHub Pages, garde <b>index.html</b> comme page d’entrée.
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    // --- PWA ---
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-    }
-
-    const SUPABASE_URL = "https://nqmfrvargnwgcavmymwh.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_I2iHiULq2tMdZZpEUEKXgg_wer0lyAH";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const $ = (id) => document.getElementById(id);
-    const msg = (t, ok=false) => {
-      const el = $('msg');
-      el.textContent = t;
-      el.className = 'msg ' + (ok ? 'ok' : '');
-      if (!ok) el.classList.remove('ok');
-    };
-    const err = (t) => {
-      const el = $('msg');
-      el.textContent = t;
-      el.className = 'msg err';
-    };
-
-    async function goIfSession() {
-      const { data } = await sb.auth.getSession();
-      if (data?.session) location.href = './app.html';
-    }
-
-    $('login').addEventListener('click', async () => {
-      msg('Connexion…');
-      const email = $('email').value.trim();
-      const password = $('password').value;
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) return err('❌ ' + error.message);
-      msg('✅ Connexion réussie', true);
-      location.href = './app.html';
-    });
-
-    $('signup').addEventListener('click', async () => {
-      msg('Création du compte…');
-      const email = $('email').value.trim();
-      const password = $('password').value;
-      const { data, error } = await sb.auth.signUp({ email, password });
-      if (error) return err('❌ ' + error.message);
-      msg('✅ Compte créé. Tu peux te connecter.', true);
-    });
-
-    $('logout').addEventListener('click', async () => {
-      await sb.auth.signOut();
-      msg('Déconnecté.', true);
-    });
-
-    goIfSession();
-  </script>
 </body>
 </html>
