@@ -1,57 +1,42 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>TimeTracker – Configuration</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Configuration – TimeTracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <h2>Configuration initiale</h2>
-
 <input id="userName" placeholder="Nom / Prénom">
 <input id="startBalance" type="number" step="0.01" placeholder="Solde départ">
 <input id="startDate" type="date">
 <select id="contractType">
-  <option value="">-- Contrat --</option>
-  <option value="39h">39h travaillées / 38h payées</option>
+<option value="">-- Contrat --</option>
+<option value="39h">39h travaillées / 38h payées</option>
 </select>
-
 <button id="startAppBtn">Démarrer l'application</button>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  if (localStorage.getItem("timeTrackerConfig")) {
-    window.location.href = "index.html";
-    return;
-  }
-  document.getElementById("startAppBtn")
-    .addEventListener("click", saveInitialConfig);
-});
+const supabase = supabase.createClient("{SUPABASE_URL}", "{SUPABASE_KEY}");
 
-function saveInitialConfig() {
-  const name = document.getElementById("userName").value.trim();
-  const startBalance = parseFloat(document.getElementById("startBalance").value);
-  const startDate = document.getElementById("startDate").value;
-  const contract = document.getElementById("contractType").value;
+(async () => {{
+  const {{ data }} = await supabase.auth.getSession();
+  if (!data.session) window.location.href = "login.html";
+}})();
 
-  if (!name || isNaN(startBalance) || !startDate || !contract) {
-    alert("Merci de remplir tous les champs.");
-    return;
-  }
-
-  const config = {
-    name,
-    startBalance,
-    currentBalance: startBalance,
-    startDate,
-    contract,
-    createdAt: new Date().toISOString()
-  };
-
+document.getElementById("startAppBtn").addEventListener("click", () => {{
+  const config = {{
+    name: userName.value,
+    startBalance: parseFloat(startBalance.value),
+    currentBalance: parseFloat(startBalance.value),
+    startDate: startDate.value,
+    contract: contractType.value
+  }};
   localStorage.setItem("timeTrackerConfig", JSON.stringify(config));
   window.location.href = "index.html";
-}
+}});
 </script>
 
 </body>
